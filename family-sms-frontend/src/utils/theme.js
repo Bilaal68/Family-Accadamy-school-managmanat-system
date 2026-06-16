@@ -1,0 +1,27 @@
+export const theme = {
+  primary: "#10026B",
+  primaryLight: "#1a0494",
+  primaryDark: "#0a0147",
+  accent: "#C2B30C",
+  accentLight: "#d4c40e",
+  accentDark: "#9e920a",
+  primaryText: "#FFFFFF",
+  accentText: "#10026B",
+  bgPage: "#F4F3FF",
+  bgCard: "#FFFFFF",
+  bgCardHover: "#FAFAFE",
+  border: "#E8E6FF",
+  textPrimary: "#10026B",
+  textSecondary: "#6B63A3",
+  textMuted: "#9B94C7",
+  success: "#16A34A",
+  error: "#DC2626",
+  warning: "#D97706",
+  sidebarBg: "#10026B",
+  sidebarText: "#C5BFEF",
+  sidebarTextActive: "#FFFFFF",
+  sidebarActive: "#1a0494",
+  sidebarAccent: "#C2B30C",
+};
+
+export default theme;

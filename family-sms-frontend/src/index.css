@@ -1,0 +1,76 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+@import "tailwindcss";
+@config "../tailwind.config.js";
+
+@theme inline {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --radius: 0.5rem;
+  --color-background: #f4f3ff;
+  --color-foreground: #10026b;
+  --color-card: #ffffff;
+  --color-card-foreground: #10026b;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #10026b;
+  --color-primary: #10026b;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #f4f3ff;
+  --color-secondary-foreground: #10026b;
+  --color-muted: #f4f3ff;
+  --color-muted-foreground: #6b63a3;
+  --color-accent: #c2b30c;
+  --color-accent-foreground: #10026b;
+  --color-destructive: #dc2626;
+  --color-destructive-foreground: #ffffff;
+  --color-border: #e8e6ff;
+  --color-input: #e8e6ff;
+  --color-ring: #10026b;
+}
+
+:root {
+  --radius: 0.5rem;
+}
+
+* {
+  border-color: #e8e6ff;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-sans);
+  background-color: #f4f3ff;
+  color: #10026b;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Shimmer skeleton */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg, #e8e6ff 25%, #f4f3ff 50%, #e8e6ff 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* Links */
+a.brand-link {
+  color: #10026b;
+  text-underline-offset: 4px;
+}
+a.brand-link:hover {
+  color: #10026b;
+  text-decoration: underline;
+  text-decoration-color: #c2b30c;
+}
