@@ -214,10 +214,6 @@ export default function EnrollmentDetailModal({ enrollmentId, open, onClose, onS
                       </p>
                     </div>
                     <div>
-                      <Label>Place of Birth</Label>
-                      <p>{enrollment.place_of_birth || "—"}</p>
-                    </div>
-                    <div>
                       <Label>Nationality</Label>
                       <p>{enrollment.nationality}</p>
                     </div>
@@ -226,24 +222,7 @@ export default function EnrollmentDetailModal({ enrollmentId, open, onClose, onS
               </CardContent>
             </Card>
 
-            {/* Card 2: Contact Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Contact Information</CardTitle>
-              </CardHeader>
-              <CardContent className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <Label>Phone Number</Label>
-                  <p>{enrollment.phone_number || "—"}</p>
-                </div>
-                <div>
-                  <Label>Email</Label>
-                  <p>{enrollment.email || "—"}</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Card 3: Academic Information */}
+            {/* Card 2: Academic Information */}
             <Card>
               <CardHeader>
                 <CardTitle>Academic Information</CardTitle>
@@ -256,10 +235,6 @@ export default function EnrollmentDetailModal({ enrollmentId, open, onClose, onS
                 <div>
                   <Label>Grade Applying For</Label>
                   <p>{enrollment.grade_applying}</p>
-                </div>
-                <div>
-                  <Label>Section Preference</Label>
-                  <p>{enrollment.section_preference || "—"}</p>
                 </div>
                 <div className="sm:col-span-2">
                   <Label>Student Type</Label>
@@ -276,7 +251,7 @@ export default function EnrollmentDetailModal({ enrollmentId, open, onClose, onS
               </CardContent>
             </Card>
 
-            {/* Card 4: Parent & Guardian Information */}
+            {/* Card 3: Parent & Guardian Information */}
             <Card>
               <CardHeader>
                 <CardTitle>Parent & Guardian Information</CardTitle>
@@ -330,7 +305,7 @@ export default function EnrollmentDetailModal({ enrollmentId, open, onClose, onS
               </CardContent>
             </Card>
 
-            {/* Card 5: Address & Emergency Contact */}
+            {/* Card 4: Address & Emergency Contact */}
             <Card>
               <CardHeader>
                 <CardTitle>Address & Emergency Contact</CardTitle>
@@ -377,10 +352,10 @@ export default function EnrollmentDetailModal({ enrollmentId, open, onClose, onS
               </CardContent>
             </Card>
 
-            {/* Card 6: Fee Information */}
+            {/* Card 5: Payment Information */}
             <Card>
               <CardHeader>
-                <CardTitle>Fee Information</CardTitle>
+                <CardTitle>Payment Information</CardTitle>
               </CardHeader>
               <CardContent className="grid gap-3 sm:grid-cols-2">
                 <div>
@@ -388,14 +363,6 @@ export default function EnrollmentDetailModal({ enrollmentId, open, onClose, onS
                   <p className="font-medium">
                     {enrollment.registration_fee_paid ? `ETB ${enrollment.registration_fee_paid}` : "ETB 0"}
                   </p>
-                </div>
-                <div>
-                  <Label>Tuition Plan</Label>
-                  <p>{enrollment.tuition_plan || "—"}</p>
-                </div>
-                <div>
-                  <Label>Scholarship/Discount</Label>
-                  <p>{enrollment.scholarship_discount ? `${enrollment.scholarship_discount}%` : "0%"}</p>
                 </div>
                 <div>
                   <Label>Payment Status</Label>
@@ -418,7 +385,7 @@ export default function EnrollmentDetailModal({ enrollmentId, open, onClose, onS
               </CardContent>
             </Card>
 
-            {/* Card 7: Cashier Review Notes */}
+            {/* Card 6: Cashier Review Notes */}
             {enrollment.cashier_notes && (
               <Card>
                 <CardHeader>

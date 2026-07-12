@@ -1,14 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow, parseISO } from "date-fns";
-import { Bell, Search } from "lucide-react";
+import { Bell, BookOpen, GraduationCap, Search, Users } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import {
   fetchNotificationsList,
   markAllNotificationsRead,
   markNotificationRead,
 } from "@/api/notifications";
+import { globalSearch } from "@/api/auth";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -58,11 +59,20 @@ function resolveMeta(pathname) {
 
 export default function AdminTopbar({ user }) {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const qc = useQueryClient();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [notifOpen, setNotifOpen] = useState(false);
 
   const meta = useMemo(() => resolveMeta(pathname), [pathname]);
+
+  // Search query
+  const searchQ = useQuery({
+    queryKey: ["global-search", searchQuery],
+    queryFn: () => globalSearch(searchQuery),
+    enabled: searchQuery.length > 0,
+  });
 
   const notificationsQ = useQuery({
     queryKey: ["topbar", "notifications", "unread"],
@@ -89,6 +99,25 @@ export default function AdminTopbar({ user }) {
       setNotifOpen(false);
     },
   });
+
+  const handleSearchResultClick = (url) => {
+    navigate(url);
+    setSearchOpen(false);
+    setSearchQuery("");
+  };
+
+  const getResultIcon = (type) => {
+    switch (type) {
+      case "student":
+        return <GraduationCap className="h-4 w-4" />;
+      case "teacher":
+        return <Users className="h-4 w-4" />;
+      case "class":
+        return <BookOpen className="h-4 w-4" />;
+      default:
+        return <Search className="h-4 w-4" />;
+    }
+  };
 
   return (
     <>
@@ -215,14 +244,137 @@ export default function AdminTopbar({ user }) {
       </header>
 
       <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
-        <DialogContent className="border-brand bg-card sm:max-w-lg">
+        <DialogContent className="border-brand bg-card sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle className="text-heading">Search</DialogTitle>
             <DialogDescription className="text-subtext">
-              Search will connect to the API in a future update.
+              Search for students, teachers, or classes
             </DialogDescription>
           </DialogHeader>
-          <Input placeholder="Search students, teachers, classes…" autoFocus />
+          
+          <div className="space-y-4">
+            <Input
+              placeholder="Type to search..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              autoFocus
+              className="border-brand"
+            />
+
+            {searchQuery && (
+              <div className="max-h-96 overflow-y-auto">
+                {searchQ.isLoading ? (
+                  <div className="py-8 text-center text-sm text-muted-label">
+                    Searching...
+                  </div>
+                ) : searchQ.data?.total === 0 ? (
+                  <div className="py-8 text-center">
+                    <Search className="mx-auto mb-2 h-8 w-8 text-muted-label/50" />
+                    <p className="text-sm text-subtext">No results found for "{searchQuery}"</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {/* Students */}
+                    {searchQ.data?.students?.length > 0 && (
+                      <div>
+                        <h3 className="mb-2 text-xs font-semibold uppercase text-muted-label">
+                          Students ({searchQ.data.students.length})
+                        </h3>
+                        <div className="space-y-1">
+                          {searchQ.data.students.map((result) => (
+                            <button
+                              key={result.id}
+                              onClick={() => handleSearchResultClick(result.url)}
+                              className="flex w-full items-center gap-3 rounded-lg border border-brand bg-card p-3 text-left transition-colors hover:bg-page"
+                            >
+                              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+                                {getResultIcon(result.type)}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-heading truncate">
+                                  {result.title}
+                                </p>
+                                <p className="text-xs text-subtext truncate">
+                                  {result.subtitle}
+                                </p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Teachers */}
+                    {searchQ.data?.teachers?.length > 0 && (
+                      <div>
+                        <h3 className="mb-2 text-xs font-semibold uppercase text-muted-label">
+                          Teachers ({searchQ.data.teachers.length})
+                        </h3>
+                        <div className="space-y-1">
+                          {searchQ.data.teachers.map((result) => (
+                            <button
+                              key={result.id}
+                              onClick={() => handleSearchResultClick(result.url)}
+                              className="flex w-full items-center gap-3 rounded-lg border border-brand bg-card p-3 text-left transition-colors hover:bg-page"
+                            >
+                              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+                                {getResultIcon(result.type)}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-heading truncate">
+                                  {result.title}
+                                </p>
+                                <p className="text-xs text-subtext truncate">
+                                  {result.subtitle}
+                                </p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Classes */}
+                    {searchQ.data?.classes?.length > 0 && (
+                      <div>
+                        <h3 className="mb-2 text-xs font-semibold uppercase text-muted-label">
+                          Classes ({searchQ.data.classes.length})
+                        </h3>
+                        <div className="space-y-1">
+                          {searchQ.data.classes.map((result) => (
+                            <button
+                              key={result.id}
+                              onClick={() => handleSearchResultClick(result.url)}
+                              className="flex w-full items-center gap-3 rounded-lg border border-brand bg-card p-3 text-left transition-colors hover:bg-page"
+                            >
+                              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+                                {getResultIcon(result.type)}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-heading truncate">
+                                  {result.title}
+                                </p>
+                                <p className="text-xs text-subtext truncate">
+                                  {result.subtitle}
+                                </p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {!searchQuery && (
+              <div className="py-8 text-center">
+                <Search className="mx-auto mb-2 h-8 w-8 text-muted-label/50" />
+                <p className="text-sm text-subtext">Start typing to search</p>
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </>

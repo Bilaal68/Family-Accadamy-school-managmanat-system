@@ -15,6 +15,7 @@ const baseNavItems = [
   { to: "/teacher/marks", label: "Marks" },
   { to: "/teacher/behaviour", label: "Behaviour" },
   { to: "/teacher/notifications", label: "Notifications" },
+  { to: "/teacher/settings", label: "Settings" },
 ];
 
 export default function TeacherLayout() {

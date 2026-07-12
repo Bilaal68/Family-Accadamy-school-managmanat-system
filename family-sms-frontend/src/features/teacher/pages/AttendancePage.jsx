@@ -26,7 +26,14 @@ function initials(name) {
     .toUpperCase();
 }
 
-function StatusToggle({ status, target, active, disabled, onClick }) {
+function submissionStatus(records) {
+  if (!records?.length) return null;
+  const allApproved = records.every((r) => r.approved_at);
+  if (allApproved) return "Approved";
+  return "Pending";
+}
+
+function StatusToggle({ target, active, disabled, onClick }) {
   const styles = {
     PRESENT: active
       ? "bg-green-600 text-white border-green-600"
@@ -53,13 +60,6 @@ function StatusToggle({ status, target, active, disabled, onClick }) {
       {labels[target]}
     </button>
   );
-}
-
-function submissionStatus(records) {
-  if (!records?.length) return null;
-  const allApproved = records.every((r) => r.approved_at);
-  if (allApproved) return "Approved";
-  return "Pending";
 }
 
 export default function AttendancePage() {
@@ -111,12 +111,26 @@ export default function AttendancePage() {
   const markMut = useMutation({
     mutationFn: ({ studentId, status }) =>
       markAttendance([{ student_id: studentId, status, date: selectedDate }]),
+    onMutate: ({ studentId, status }) => {
+      // Optimistically update UI immediately
+      qc.setQueryData(
+        ["teacher", "attendance", classId, selectedDate],
+        (oldData) => {
+          if (!oldData) return oldData;
+          return oldData.map((record) =>
+            record.student_id === studentId ? { ...record, status } : record
+          );
+        }
+      );
+    },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["teacher", "attendance", classId, selectedDate] });
       qc.invalidateQueries({ queryKey: ["teacher", "pending-submissions", classId] });
     },
-    onError: (e) =>
-      toast.error(e.response?.data?.detail || "Could not save attendance."),
+    onError: (e) => {
+      // Refetch on error to revert optimistic update
+      qc.invalidateQueries({ queryKey: ["teacher", "attendance", classId, selectedDate] });
+      toast.error(e.response?.data?.detail || "Could not save attendance.");
+    },
   });
 
   const submitMut = useMutation({

@@ -5,7 +5,13 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.views import TokenRefreshView
 
-from .serializers import LoginSerializer, LogoutSerializer, MeSerializer
+from .serializers import (
+    ChangePasswordSerializer,
+    LoginSerializer,
+    LogoutSerializer,
+    MeSerializer,
+    ProfileUpdateSerializer,
+)
 from .tokens import CustomRefreshToken
 
 
@@ -53,3 +59,36 @@ class MeView(generics.RetrieveAPIView):
 
     def get_object(self):
         return self.request.user
+
+
+class ProfileUpdateView(generics.UpdateAPIView):
+    """Update current user's profile"""
+    permission_classes = [IsAuthenticated]
+    serializer_class = ProfileUpdateSerializer
+    
+    def get_object(self):
+        return self.request.user
+    
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        
+        # Return full user data using MeSerializer
+        return Response(MeSerializer(instance).data)
+
+
+class ChangePasswordView(APIView):
+    """Change current user's password"""
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(
+            {"detail": "Password changed successfully."},
+            status=status.HTTP_200_OK
+        )

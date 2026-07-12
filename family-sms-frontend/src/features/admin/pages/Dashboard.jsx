@@ -17,8 +17,6 @@ import {
   GraduationCap,
   Megaphone,
   School,
-  Upload,
-  UserPlus,
   Users,
 } from "lucide-react";
 import { useState } from "react";
@@ -33,7 +31,6 @@ import { fetchNotificationsList } from "@/api/notifications";
 import { fetchTeachersList } from "@/api/teachers";
 import { PENDING_APPROVALS_KEY } from "@/features/admin/hooks/usePendingApprovalsCount";
 import { fetchStudents } from "@/api/students";
-import BulkImportModal from "@/features/admin/pages/students/BulkImportModal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -46,6 +43,7 @@ import {
 } from "@/components/shared/SectionSkeleton";
 import { cn } from "@/lib/utils";
 import { theme } from "@/utils/theme";
+import client from "@/api/client";
 
 const QK = {
   studentsCount: ["admin", "metrics", "students-count"],
@@ -96,7 +94,6 @@ function ChartTooltip({ active, payload }) {
 export default function Dashboard() {
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const [bulkOpen, setBulkOpen] = useState(false);
 
   const studentsQ = useQuery({
     queryKey: QK.studentsCount,
@@ -183,6 +180,12 @@ export default function Dashboard() {
     },
   });
 
+  // Fetch teacher attendance summary
+  const teacherAttSummaryQ = useQuery({
+    queryKey: ['teacher-att-today'],
+    queryFn: () => client.get('/attendance/teachers/today_summary/').then(r => r.data),
+  });
+
   const approveMarkMut = useMutation({
     mutationFn: (id) => approveGrade(id),
     onSuccess: () => {
@@ -223,13 +226,15 @@ export default function Dashboard() {
     studentsQ.isLoading ||
     teachersQ.isLoading ||
     classesQ.isLoading ||
-    todayAttendanceQ.isLoading;
+    todayAttendanceQ.isLoading ||
+    teacherAttSummaryQ.isLoading;
 
   const metricsError =
     studentsQ.isError ||
     teachersQ.isError ||
     classesQ.isError ||
-    todayAttendanceQ.isError;
+    todayAttendanceQ.isError ||
+    teacherAttSummaryQ.isError;
 
   return (
     <div className="space-y-8">
@@ -245,6 +250,7 @@ export default function Dashboard() {
               classesQ.refetch();
               todayAttendanceQ.refetch();
               enrollmentStatsQ.refetch();
+              teacherAttSummaryQ.refetch();
             }}
           />
         )}
@@ -273,6 +279,44 @@ export default function Dashboard() {
                 label="Pending enrollments"
               />
             </Link>
+          </div>
+        )}
+      </section>
+
+      {/* Teacher Attendance Card */}
+      <section>
+        {teacherAttSummaryQ.isLoading && <MetricCardsSkeleton />}
+        {teacherAttSummaryQ.isError && (
+          <SectionError
+            message="Could not load teacher attendance."
+            onRetry={() => teacherAttSummaryQ.refetch()}
+          />
+        )}
+        {!teacherAttSummaryQ.isLoading && !teacherAttSummaryQ.isError && (
+          <div 
+            className="bg-white rounded-xl border border-gray-100 p-5 hover:shadow-md transition-shadow cursor-pointer"
+            onClick={() => navigate('/admin/attendance?tab=teachers')}
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-lg bg-[#10026B] flex items-center justify-center">
+                <GraduationCap className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-sm text-gray-500">Teacher Attendance</span>
+            </div>
+            <p className="text-2xl font-bold text-[#10026B]">
+              {teacherAttSummaryQ.data?.present || 0}/{teacherAttSummaryQ.data?.total || 0}
+            </p>
+            <p className="text-xs text-gray-400 mt-1">Present today</p>
+            <div className="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-[#C2B30C] rounded-full transition-all"
+                style={{
+                  width: teacherAttSummaryQ.data?.total
+                    ? `${(teacherAttSummaryQ.data.present / teacherAttSummaryQ.data.total) * 100}%`
+                    : '0%'
+                }}
+              />
+            </div>
           </div>
         )}
       </section>
@@ -490,11 +534,6 @@ export default function Dashboard() {
         </h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <QuickAction
-            icon={UserPlus}
-            label="Register student"
-            onClick={() => navigate("/admin/students")}
-          />
-          <QuickAction
             icon={GraduationCap}
             label="Register teacher"
             onClick={() => navigate("/admin/teachers")}
@@ -503,11 +542,6 @@ export default function Dashboard() {
             icon={School}
             label="Create class"
             onClick={() => navigate("/admin/classes")}
-          />
-          <QuickAction
-            icon={Upload}
-            label="Bulk import"
-            onClick={() => setBulkOpen(true)}
           />
           <QuickAction
             icon={Megaphone}
@@ -522,7 +556,6 @@ export default function Dashboard() {
         </div>
       </section>
 
-      <BulkImportModal open={bulkOpen} onClose={() => setBulkOpen(false)} />
     </div>
   );
 }

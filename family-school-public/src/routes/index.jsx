@@ -1,7 +1,6 @@
-import { Route, Routes, useLocation } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 
-import About from "@/pages/About";
 import ApplicationStatus from "@/pages/ApplicationStatus";
 import EnrollmentForm from "@/pages/EnrollmentForm";
 import EnrollmentSuccess from "@/pages/EnrollmentSuccess";
@@ -14,10 +13,11 @@ export default function AppRoutes() {
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<Home />} />
-        <Route path="/about" element={<About />} />
         <Route path="/enroll" element={<EnrollmentForm />} />
         <Route path="/enroll/status" element={<ApplicationStatus />} />
         <Route path="/enroll/success" element={<EnrollmentSuccess />} />
+        {/* Catch-all: redirect any unknown route to home */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AnimatePresence>
   );

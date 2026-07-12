@@ -29,7 +29,7 @@ const STEPS = [
   "Fee & Review",
 ];
 
-const GRADES = Array.from({ length: 8 }, (_, i) => `Grade ${i + 1}`);
+const GRADES = ["KG1", "KG2", "KG3", "Grade 1", "Grade 2", "Grade 3", "Grade 4"];
 
 const NEW_STUDENT_DOCS = [
   { key: "birth_certificate", label: "Birth Certificate", required: true },
@@ -47,12 +47,10 @@ const INITIAL_FORM = {
   last_name: "",
   gender: "",
   date_of_birth: "",
-  place_of_birth: "",
   nationality: "Ethiopian",
   photo: null,
   academic_year: ACADEMIC_YEARS[0],
   grade_applying: "",
-  section_preference: "",
   previous_school: "",
   is_transfer: false,
   father_name: "",
@@ -76,8 +74,6 @@ const INITIAL_FORM = {
   emergency_contact_phone: "",
   documents: {},
   registration_fee_paid: "",
-  tuition_plan: "",
-  scholarship_discount: "",
   payment_status: "",
   fee_receipt: null,
   cashier_notes: "",
@@ -477,11 +473,9 @@ export default function NewEnrollmentPage() {
 
           {currentStep === 4 && (
             <div className="space-y-6">
-              <h3 className="text-lg font-medium">Fee Information & Review</h3>
+              <h3 className="text-lg font-medium">Payment Information & Review</h3>
               <div className="space-y-4">
                 <div><Label>Registration Fee Paid</Label><Input type="number" value={formData.registration_fee_paid} onChange={(e) => setFormData({ ...formData, registration_fee_paid: e.target.value })} placeholder="0.00" /></div>
-                <div><Label>Tuition Plan</Label><Input value={formData.tuition_plan} onChange={(e) => setFormData({ ...formData, tuition_plan: e.target.value })} placeholder="e.g., Annual, Semester" /></div>
-                <div><Label>Scholarship/Discount (%)</Label><Input type="number" value={formData.scholarship_discount} onChange={(e) => setFormData({ ...formData, scholarship_discount: e.target.value })} placeholder="0" /></div>
                 <div>
                   <Label>Payment Status *</Label>
                   <Select value={formData.payment_status} onValueChange={(v) => setFormData({ ...formData, payment_status: v })}>

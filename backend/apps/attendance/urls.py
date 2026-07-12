@@ -6,8 +6,11 @@ from apps.attendance.views import (
     AttendanceListView,
     ExportAttendanceView,
     MarkAttendanceView,
+    MarkTeacherAttendanceView,
     SendAttendanceParentsView,
     SubmitAttendanceView,
+    TeacherAttendanceListView,
+    TeacherAttendanceTodaySummaryView,
 )
 
 app_name = "attendance"
@@ -18,6 +21,9 @@ urlpatterns = [
     path("export/", ExportAttendanceView.as_view(), name="export"),
     path("send-to-parents/", SendAttendanceParentsView.as_view(), name="send-to-parents"),
     path("approve/<uuid:pk>/", ApproveAttendanceView.as_view(), name="approve"),
+    path("teachers/mark/", MarkTeacherAttendanceView.as_view(), name="mark-teacher"),
+    path("teachers/today_summary/", TeacherAttendanceTodaySummaryView.as_view(), name="teacher-today-summary"),
+    path("teachers/", TeacherAttendanceListView.as_view(), name="teacher-list"),
     path("<uuid:pk>/", AttendanceDetailView.as_view(), name="detail"),
     path("", AttendanceListView.as_view(), name="list"),
 ]

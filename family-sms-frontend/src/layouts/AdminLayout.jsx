@@ -16,6 +16,7 @@ const baseNavItems = [
   { to: "/admin/approvals", label: "Approvals" },
   { to: "/admin/announcements", label: "Announcements" },
   { to: "/admin/reports", label: "Reports" },
+  { to: "/admin/settings", label: "Settings" },
 ];
 
 export default function AdminLayout() {

@@ -1,4 +1,4 @@
-export const GRADES = Array.from({ length: 8 }, (_, i) => `Grade ${i + 1}`);
+export const GRADES = ["KG1", "KG2", "KG3", "Grade 1", "Grade 2", "Grade 3", "Grade 4"];
 
 export const ACADEMIC_YEARS = ["2025/2026", "2026/2027", "2027/2028"];
 
@@ -7,6 +7,7 @@ export const ENROLLMENT_STEPS = [
   { id: "student", title: "Student Information", short: "Student" },
   { id: "parents", title: "Parent & Guardian", short: "Parents" },
   { id: "documents", title: "Documents", short: "Documents" },
+  { id: "payment", title: "Payment", short: "Payment" },
   { id: "review", title: "Review & Submit", short: "Review" },
 ];
 

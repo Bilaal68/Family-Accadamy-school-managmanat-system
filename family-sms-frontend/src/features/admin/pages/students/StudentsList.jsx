@@ -6,8 +6,6 @@ import {
   Pencil,
   Search,
   Trash2,
-  Upload,
-  UserPlus,
   Users,
 } from "lucide-react";
 import { useState } from "react";
@@ -38,9 +36,7 @@ import {
 import SectionError from "@/components/shared/SectionError";
 import useDebouncedValue from "@/hooks/useDebouncedValue";
 
-import BulkImportModal from "./BulkImportModal";
 import EditStudentModal from "./EditStudentModal";
-import RegisterStudentModal from "./RegisterStudentModal";
 import StudentAvatar from "./StudentAvatar";
 
 const PAGE_SIZE = 20;
@@ -60,8 +56,6 @@ export default function StudentsList() {
   const [search, setSearch] = useState("");
   const [classFilter, setClassFilter] = useState("all");
   const [page, setPage] = useState(1);
-  const [registerOpen, setRegisterOpen] = useState(false);
-  const [bulkOpen, setBulkOpen] = useState(false);
   const [editStudent, setEditStudent] = useState(null);
   const [deleteStudentTarget, setDeleteStudentTarget] = useState(null);
 
@@ -142,22 +136,6 @@ export default function StudentsList() {
               ))}
             </SelectContent>
           </Select>
-          <Button
-            variant="outline"
-            className="border-black text-black hover:bg-black hover:text-white"
-            onClick={() => setRegisterOpen(true)}
-          >
-            <UserPlus className="mr-2 h-4 w-4" />
-            Register Student
-          </Button>
-          <Button
-            variant="outline"
-            className="border-black text-black hover:bg-black hover:text-white"
-            onClick={() => setBulkOpen(true)}
-          >
-            <Upload className="mr-2 h-4 w-4" />
-            Bulk Import
-          </Button>
         </div>
       </div>
 
@@ -289,13 +267,12 @@ export default function StudentsList() {
           )}
       </div>
 
-      <RegisterStudentModal open={registerOpen} onClose={() => setRegisterOpen(false)} />
-      <BulkImportModal open={bulkOpen} onClose={() => setBulkOpen(false)} />
       <EditStudentModal
         open={!!editStudent}
         student={editStudent}
         onClose={() => setEditStudent(null)}
       />
+      
       <ConfirmDeleteDialog
         open={!!deleteStudentTarget}
         onClose={() => setDeleteStudentTarget(null)}

@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 
-import { ArrowLeft, ArrowRight, GraduationCap, Info, School } from "lucide-react";
+import { ArrowLeft, ArrowRight, Building2, CheckCircle, Copy, GraduationCap, Info, School, Upload } from "lucide-react";
 
 import { useState } from "react";
 
@@ -68,8 +68,6 @@ const INITIAL_FORM = {
 
   date_of_birth: "",
 
-  place_of_birth: "",
-
   nationality: "Ethiopian",
 
   photo: null,
@@ -77,8 +75,6 @@ const INITIAL_FORM = {
   academic_year: ACADEMIC_YEARS[0],
 
   grade_applying: "",
-
-  section_preference: "",
 
   previous_school: "",
 
@@ -124,8 +120,6 @@ const INITIAL_FORM = {
 
   documents: {},
 
-  fee_receipt: null,
-
 };
 
 
@@ -163,6 +157,10 @@ export default function EnrollmentForm() {
   const [formData, setFormData] = useState(INITIAL_FORM);
 
   const [typeChosen, setTypeChosen] = useState(false);
+
+  const [paymentReceipt, setPaymentReceipt] = useState(null);
+
+  const [paymentReceiptError, setPaymentReceiptError] = useState("");
 
 
 
@@ -422,6 +420,34 @@ export default function EnrollmentForm() {
 
       }
 
+      case 4: {
+
+        if (!paymentReceipt) {
+
+          setPaymentReceiptError("Please upload your payment receipt before continuing.");
+
+          toast.error("Payment receipt is required.");
+
+          return false;
+
+        }
+
+        if (paymentReceipt.size > 5 * 1024 * 1024) {
+
+          setPaymentReceiptError("File size must be under 5MB.");
+
+          toast.error("File size must be under 5MB.");
+
+          return false;
+
+        }
+
+        setPaymentReceiptError("");
+
+        return true;
+
+      }
+
       default:
 
         return true;
@@ -494,6 +520,12 @@ export default function EnrollmentForm() {
 
     }
 
+    if (paymentReceipt) {
+
+      payload.append("fee_receipt", paymentReceipt);
+
+    }
+
     submitMut.mutate(payload);
 
   };
@@ -514,43 +546,32 @@ export default function EnrollmentForm() {
 
     <PublicLayout>
 
-      <div className="border-b border-[#E8E6FF] bg-[#10026B] px-4 py-10 text-white sm:px-6">
+      {/* Branded Header */}
 
-        <div className="mx-auto max-w-3xl">
+      <div className="bg-[#10026B] py-4 px-6">
 
-          <Link
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
 
-            to="/"
+          <Link to="/" className="flex items-center gap-2 text-white font-bold text-lg">
 
-            className="inline-flex items-center text-sm text-white/70 transition hover:text-white"
+            <img
+              src="/logo.PNG"
+              alt="Family Academy"
+              className="w-9 h-9 object-contain"
+            />
 
-          >
-
-            <ArrowLeft className="mr-1.5 h-4 w-4" />
-
-            Back to home
+            <div>
+              <p className="text-white font-bold text-sm leading-tight">Family Academy</p>
+              <p className="text-[#C2B30C] text-xs leading-tight">Akkadaamii Faamilii</p>
+            </div>
 
           </Link>
 
-          <h1 className="mt-4 text-2xl font-bold sm:text-3xl">Admission Application</h1>
+          <Link to="/" className="text-white/70 hover:text-white text-sm transition-colors">
 
-          <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/75">
+            ← Back to Home
 
-            Complete all sections below to apply for enrollment at Family Academy. We accept
-
-            students in <strong className="text-[#C2B30C]">Grades 1 through 8</strong> only.
-
-          </p>
-
-          {typeChosen && currentStep > 0 && (
-
-            <p className="mt-3 inline-flex rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-[#C2B30C]">
-
-              {studentTypeLabel}
-
-            </p>
-
-          )}
+          </Link>
 
         </div>
 
@@ -558,19 +579,51 @@ export default function EnrollmentForm() {
 
 
 
-      <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
+      {/* Gradient Background */}
 
-        <div className="mb-8 rounded-xl border border-[#E8E6FF] bg-white p-5 shadow-sm">
+      <div className="min-h-screen bg-gradient-to-b from-[#F4F3FF] to-white">
 
-          <StepIndicator currentStep={currentStep} />
+        <div className="mx-auto max-w-3xl px-6 py-12">
 
-          <p className="mt-4 hidden text-center text-sm font-medium text-[#10026B] lg:block">
+          {/* Page Header */}
 
-            {ENROLLMENT_STEPS[currentStep].title}
+          <div className="text-center mb-8">
 
-          </p>
+            <h1 className="text-3xl font-bold text-[#10026B] mb-2">Apply to Family Academy</h1>
 
-        </div>
+            <p className="text-gray-500">Fill in your child's details below to begin the enrollment process.</p>
+
+            {typeChosen && currentStep > 0 && (
+
+              <span className="inline-flex mt-3 rounded-full bg-[#C2B30C]/10 border border-[#C2B30C]/30 px-4 py-1.5 text-sm font-medium text-[#10026B]">
+
+                {studentTypeLabel}
+
+              </span>
+
+            )}
+
+          </div>
+
+
+
+          {/* Main Form Card */}
+
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 md:p-10">
+
+            {/* Step Indicator */}
+
+            <div className="mb-8">
+
+              <StepIndicator currentStep={currentStep} />
+
+              <p className="mt-4 text-center text-sm font-medium text-[#10026B]">
+
+                {ENROLLMENT_STEPS[currentStep].title}
+
+              </p>
+
+            </div>
 
 
 
@@ -1208,18 +1261,6 @@ export default function EnrollmentForm() {
 
                 ))}
 
-                <FileUploadField
-
-                  label="Registration Fee Receipt"
-
-                  hint="Upload proof of registration fee payment (optional)"
-
-                  file={formData.fee_receipt}
-
-                  onChange={(file) => update("fee_receipt", file)}
-
-                />
-
               </div>
 
             </FormSection>
@@ -1229,6 +1270,266 @@ export default function EnrollmentForm() {
 
 
           {currentStep === 4 && (
+
+            <FormSection
+
+              title="Payment"
+
+              description="Transfer the registration fee to our school bank account and upload proof of payment."
+
+            >
+
+              {/* TODO: Replace with real bank account details from Family School */}
+
+              <div className="bg-[#10026B]/5 border border-[#10026B]/20 rounded-xl p-6 mb-6">
+
+                <div className="flex items-center gap-3 mb-4">
+
+                  <div className="w-10 h-10 rounded-full bg-[#10026B] flex items-center justify-center">
+
+                    <Building2 className="w-5 h-5 text-white" />
+
+                  </div>
+
+                  <div>
+
+                    <h3 className="font-bold text-[#10026B]">School Bank Account Details</h3>
+
+                    <p className="text-sm text-gray-500">Transfer your registration fee to this account</p>
+
+                  </div>
+
+                </div>
+
+
+
+                <div className="grid md:grid-cols-2 gap-4">
+
+                  <div className="bg-white rounded-lg p-4 border border-gray-100">
+
+                    <p className="text-xs text-gray-400 mb-1">Bank Name</p>
+
+                    {/* Bank Name: Commercial Bank of Ethiopia (change if different bank) */}
+
+                    <p className="font-semibold text-[#10026B]">Commercial Bank of Ethiopia</p>
+
+                  </div>
+
+                  <div className="bg-white rounded-lg p-4 border border-gray-100">
+
+                    <p className="text-xs text-gray-400 mb-1">Account Name</p>
+
+                    <p className="font-semibold text-[#10026B]">Family Academy</p>
+
+                  </div>
+
+                  <div className="bg-white rounded-lg p-4 border border-gray-100">
+
+                    <p className="text-xs text-gray-400 mb-1">Account Number</p>
+
+                    {/* Account Number: [get from school admin] */}
+
+                    <div className="flex items-center justify-between">
+
+                      <p className="font-semibold text-[#10026B] tracking-widest">
+
+                        1000123456789
+
+                      </p>
+
+                      <button
+
+                        type="button"
+
+                        onClick={() => {
+
+                          navigator.clipboard.writeText("1000123456789");
+
+                          toast.success("Account number copied!");
+
+                        }}
+
+                        className="text-[#C2B30C] hover:text-[#9e920a] transition-colors"
+
+                      >
+
+                        <Copy className="w-4 h-4" />
+
+                      </button>
+
+                    </div>
+
+                  </div>
+
+                  <div className="bg-white rounded-lg p-4 border border-gray-100">
+
+                    <p className="text-xs text-gray-400 mb-1">Registration Fee</p>
+
+                    {/* Registration Fee Amount: [get from school admin] */}
+
+                    <p className="font-semibold text-[#10026B]">ETB 1,500</p>
+
+                  </div>
+
+                </div>
+
+
+
+                <div className="mt-4 bg-[#C2B30C]/10 rounded-lg p-3 flex items-start gap-2">
+
+                  <Info className="w-4 h-4 text-[#C2B30C] flex-shrink-0 mt-0.5" />
+
+                  <p className="text-xs text-gray-600">
+
+                    After making the payment, upload your payment receipt below.
+
+                    Your application will not be processed without proof of payment.
+
+                  </p>
+
+                </div>
+
+              </div>
+
+
+
+              <div className="space-y-4">
+
+                <h3 className="font-bold text-[#10026B]">Upload Payment Receipt</h3>
+
+                <p className="text-sm text-gray-500">
+
+                  Upload a clear photo or scan of your bank transfer receipt or deposit slip.
+
+                </p>
+
+
+
+                <div
+
+                  className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer ${
+
+                    paymentReceipt
+
+                      ? "border-green-400 bg-green-50"
+
+                      : "border-[#10026B]/30 hover:border-[#C2B30C] hover:bg-[#C2B30C]/5"
+
+                  }`}
+
+                  onClick={() => document.getElementById("payment-receipt-input").click()}
+
+                  onDragOver={(e) => e.preventDefault()}
+
+                  onDrop={(e) => {
+
+                    e.preventDefault();
+
+                    const file = e.dataTransfer.files[0];
+
+                    if (file) setPaymentReceipt(file);
+
+                  }}
+
+                >
+
+                  <input
+
+                    id="payment-receipt-input"
+
+                    type="file"
+
+                    accept="image/*,.pdf"
+
+                    className="hidden"
+
+                    onChange={(e) => setPaymentReceipt(e.target.files[0])}
+
+                  />
+
+
+
+                  {paymentReceipt ? (
+
+                    <div className="flex flex-col items-center gap-2">
+
+                      <CheckCircle className="w-10 h-10 text-green-500" />
+
+                      <p className="font-semibold text-green-700">{paymentReceipt.name}</p>
+
+                      <p className="text-xs text-gray-400">
+
+                        {(paymentReceipt.size / 1024).toFixed(1)} KB
+
+                      </p>
+
+                      <button
+
+                        type="button"
+
+                        onClick={(e) => {
+
+                          e.stopPropagation();
+
+                          setPaymentReceipt(null);
+
+                        }}
+
+                        className="text-xs text-red-400 hover:text-red-600 underline"
+
+                      >
+
+                        Remove and upload different file
+
+                      </button>
+
+                    </div>
+
+                  ) : (
+
+                    <div className="flex flex-col items-center gap-2">
+
+                      <Upload className="w-10 h-10 text-[#10026B]/40" />
+
+                      <p className="font-semibold text-[#10026B]">
+
+                        Click or drag your receipt here
+
+                      </p>
+
+                      <p className="text-xs text-gray-400">
+
+                        Accepted formats: JPG, PNG, PDF — Max size: 5MB
+
+                      </p>
+
+                    </div>
+
+                  )}
+
+                </div>
+
+
+
+                {paymentReceiptError && (
+
+                  <p className="text-red-500 text-sm flex items-center gap-1">
+
+                    <Info className="w-4 h-4" /> {paymentReceiptError}
+
+                  </p>
+
+                )}
+
+              </div>
+
+            </FormSection>
+
+          )}
+
+
+
+          {currentStep === 5 && (
 
             <FormSection
 
@@ -1316,7 +1617,15 @@ export default function EnrollmentForm() {
 
                   label="Documents"
 
-                  value={`${Object.keys(formData.documents).length} file(s) attached${formData.fee_receipt ? " · Fee receipt included" : ""}`}
+                  value={`${Object.keys(formData.documents).length} file(s) attached`}
+
+                />
+
+                <ReviewRow
+
+                  label="Payment Receipt"
+
+                  value={paymentReceipt ? paymentReceipt.name : "Not uploaded"}
 
                 />
 
@@ -1342,7 +1651,7 @@ export default function EnrollmentForm() {
 
         {currentStep > 0 && (
 
-          <div className="mt-8 flex flex-col-reverse gap-3 border-t border-[#E8E6FF] pt-6 sm:flex-row sm:justify-between">
+          <div className="mt-8 flex flex-col-reverse gap-3 border-t border-gray-100 pt-6 sm:flex-row sm:justify-between">
 
             <Button
 
@@ -1352,7 +1661,7 @@ export default function EnrollmentForm() {
 
               disabled={currentStep === 0}
 
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto border-2 border-gray-200 text-gray-600 font-semibold px-8 py-3 rounded-xl hover:border-gray-300 hover:bg-gray-50 transition-all"
 
             >
 
@@ -1368,7 +1677,7 @@ export default function EnrollmentForm() {
 
                 onClick={handleNext}
 
-                className="w-full bg-[#10026B] hover:bg-[#1a0a8a] sm:w-auto"
+                className="w-full sm:w-auto bg-[#10026B] text-white font-semibold px-8 py-3 rounded-xl hover:bg-[#1a0494] transition-all hover:shadow-lg disabled:opacity-40 disabled:cursor-not-allowed"
 
               >
 
@@ -1386,7 +1695,7 @@ export default function EnrollmentForm() {
 
                 disabled={submitMut.isPending}
 
-                className="w-full bg-[#C2B30C] font-semibold text-[#10026B] hover:bg-[#d4c50e] sm:w-auto"
+                className="w-full sm:w-auto bg-gradient-to-r from-[#C2B30C] to-[#d4c40e] text-[#10026B] font-bold px-8 py-3 rounded-xl hover:shadow-lg transition-all hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed"
 
               >
 
@@ -1399,6 +1708,10 @@ export default function EnrollmentForm() {
           </div>
 
         )}
+
+          </div>
+
+        </div>
 
       </div>
 

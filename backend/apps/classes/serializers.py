@@ -113,7 +113,7 @@ def build_leaderboard(school_class):
     students = list(
         Student.objects.filter(school_class=school_class, is_active=True).annotate(
             average_score=Coalesce(
-                Avg('markentry__score', filter=Q(markentry__approved_at__isnull=False)),
+                Avg('mark_entries__score', filter=Q(mark_entries__approved_at__isnull=False)),
                 Value(0.0)
             )
         ).order_by("-average_score", "full_name")

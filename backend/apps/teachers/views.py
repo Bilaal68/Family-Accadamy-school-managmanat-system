@@ -20,6 +20,10 @@ from apps.teachers.serializers import (
 
 
 class TeacherViewSet(viewsets.ModelViewSet):
+    """
+    Manage teacher records and assignments. Admin only.
+    Supports creating, updating, and deleting teacher accounts.
+    """
     queryset = Teacher.objects.select_related("user", "assigned_class")
     permission_classes = [IsAdmin]
     http_method_names = ["get", "post", "put", "delete", "head", "options"]
@@ -41,10 +45,10 @@ class TeacherViewSet(viewsets.ModelViewSet):
         )
 
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+        serializer = self.get_serializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         teacher = serializer.save()
-        output = TeacherDetailSerializer(teacher)
+        output = TeacherDetailSerializer(teacher, context={"request": request})
         return Response(output.data, status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
@@ -126,7 +130,7 @@ class TeacherViewSet(viewsets.ModelViewSet):
                     "type": "marks",
                     "description": (
                         f"Marks for {entry.student.full_name} — "
-                        f"{entry.subject} ({entry.term})"
+                        f"{entry.subject} ({entry.get_semester_display()})"
                     ),
                     "submitted_at": entry.submitted_at,
                 }

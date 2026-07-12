@@ -10,6 +10,8 @@ import CashierLogin from "@/features/auth/CashierLogin";
 import TeacherLogin from "@/features/auth/TeacherLogin";
 import Unauthorized from "@/features/auth/Unauthorized";
 
+import SettingsPage from "@/features/shared/pages/SettingsPage";
+
 import Dashboard from "@/features/admin/pages/Dashboard";
 import AnnouncementsPage from "@/features/admin/pages/AnnouncementsPage";
 import ApprovalsPage from "@/features/admin/pages/ApprovalsPage";
@@ -68,6 +70,7 @@ export default function AppRoutes() {
         <Route path="approvals" element={<ApprovalsPage />} />
         <Route path="announcements" element={<AnnouncementsPage />} />
         <Route path="reports" element={<ReportsPage />} />
+        <Route path="settings" element={<SettingsPage />} />
       </Route>
 
       <Route
@@ -85,6 +88,7 @@ export default function AppRoutes() {
         <Route path="marks" element={<TeacherMarksPage />} />
         <Route path="behaviour" element={<TeacherBehaviourPage />} />
         <Route path="notifications" element={<TeacherNotificationsPage />} />
+        <Route path="settings" element={<SettingsPage />} />
       </Route>
 
       <Route
@@ -100,6 +104,7 @@ export default function AppRoutes() {
         <Route path="enrollments" element={<EnrollmentsPage />} />
         <Route path="enrollments/new" element={<NewEnrollmentPage />} />
         <Route path="enrollments/:id" element={<EnrollmentDetail />} />
+        <Route path="settings" element={<SettingsPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/login" replace />} />

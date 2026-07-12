@@ -25,3 +25,11 @@ export function fetchAnnouncements() {
 export function sendAnnouncement(payload) {
   return client.post("/notifications/announce/", payload);
 }
+
+export function updateAnnouncement(id, payload) {
+  return client.put(`/notifications/announcements/${id}/`, payload);
+}
+
+export function deleteAnnouncement(id) {
+  return client.delete(`/notifications/announcements/${id}/`);
+}

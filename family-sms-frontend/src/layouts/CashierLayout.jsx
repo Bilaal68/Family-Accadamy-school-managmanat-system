@@ -10,6 +10,7 @@ const baseNavItems = [
   { to: "/cashier/dashboard", label: "Dashboard", icon: "LayoutDashboard" },
   { to: "/cashier/enrollments", label: "Enrollments", icon: "ClipboardList" },
   { to: "/cashier/enrollments/new", label: "New Enrollment", icon: "UserPlus" },
+  { to: "/cashier/settings", label: "Settings", icon: "Settings" },
 ];
 
 export default function CashierLayout() {

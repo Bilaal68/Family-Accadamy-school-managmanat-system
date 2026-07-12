@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { format, formatDistanceToNow, parseISO } from "date-fns";
-import { ArrowLeft, ClipboardList, Percent } from "lucide-react";
+import { ArrowLeft, ClipboardList, Percent, FileText, Download, ExternalLink, Image } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 
 import { fetchTeacherSummary, getTeacher } from "@/api/teachers";
@@ -61,41 +61,84 @@ export default function TeacherDetail() {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="border-[#E5E5E5] bg-white">
           <CardHeader>
-            <CardTitle>{teacher.full_name}</CardTitle>
+            <CardTitle>Teacher Profile</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            <div className="flex justify-between">
-              <span className="text-neutral-500">Staff ID</span>
-              <span className="font-mono font-medium">{teacher.staff_id}</span>
+          <CardContent className="space-y-4">
+            {/* Photo */}
+            <div className="flex justify-center">
+              {teacher.photo_url ? (
+                <div className="relative group">
+                  <img
+                    src={teacher.photo_url}
+                    alt={teacher.full_name}
+                    className="h-32 w-32 rounded-full object-cover border-4 border-[#10026B]"
+                  />
+                  <a
+                    href={teacher.photo_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <ExternalLink className="h-6 w-6 text-white" />
+                  </a>
+                </div>
+              ) : (
+                <div className="h-32 w-32 rounded-full bg-[#C2B30C] flex items-center justify-center border-4 border-[#10026B]">
+                  <span className="text-[#10026B] font-bold text-4xl">
+                    {teacher.full_name?.charAt(0)}
+                  </span>
+                </div>
+              )}
             </div>
-            <div className="flex justify-between">
-              <span className="text-neutral-500">Email</span>
-              <span className="font-medium">{teacher.email}</span>
+            
+            {/* Basic Info */}
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-neutral-500">Full Name</span>
+                <span className="font-medium">{teacher.full_name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-neutral-500">Staff ID</span>
+                <span className="font-mono font-medium">{teacher.staff_id}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-neutral-500">Email</span>
+                <span className="font-medium">{teacher.email}</span>
+              </div>
+              {teacher.phone_number && (
+                <div className="flex justify-between">
+                  <span className="text-neutral-500">Phone Number</span>
+                  <span className="font-medium">{teacher.phone_number}</span>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <span className="text-neutral-500">Joined</span>
+                <span>
+                  {teacher.joined_at
+                    ? format(parseISO(teacher.joined_at), "MMM d, yyyy")
+                    : "—"}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-neutral-500">Assigned Class</span>
+                <span className="font-medium">
+                  {teacher.assigned_class_name || (
+                    <span className="text-amber-600">Unassigned</span>
+                  )}
+                </span>
+              </div>
+              
+              {teacher.assigned_class_id && (
+                <div className="pt-3 border-t">
+                  <Link
+                    to={`/admin/classes/${teacher.assigned_class_id}`}
+                    className="inline-block text-sm font-medium text-[#10026B] underline-offset-4 hover:underline"
+                  >
+                    View Class Details →
+                  </Link>
+                </div>
+              )}
             </div>
-            <div className="flex justify-between">
-              <span className="text-neutral-500">Joined</span>
-              <span>
-                {teacher.joined_at
-                  ? format(parseISO(teacher.joined_at), "MMM d, yyyy")
-                  : "—"}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-neutral-500">Assigned class</span>
-              <span className="font-medium">
-                {teacher.assigned_class_name || (
-                  <span className="text-amber-600">Unassigned</span>
-                )}
-              </span>
-            </div>
-            {teacher.assigned_class_id && (
-              <Link
-                to={`/admin/classes/${teacher.assigned_class_id}`}
-                className="inline-block text-sm font-medium text-black underline-offset-4 hover:underline"
-              >
-                View class →
-              </Link>
-            )}
           </CardContent>
         </Card>
 
@@ -145,6 +188,67 @@ export default function TeacherDetail() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Documents Section */}
+      {(teacher.photo_url || teacher.qualification_document_url) && (
+        <Card className="border-[#E5E5E5] bg-white">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Teacher Documents
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {teacher.photo_url && (
+                <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg hover:border-[#10026B] transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-[#10026B]/10 rounded-lg">
+                      <Image className="w-5 h-5 text-[#10026B]" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-700">Teacher Photo</p>
+                      <p className="text-xs text-gray-500">Profile photograph</p>
+                    </div>
+                  </div>
+                  <a
+                    href={teacher.photo_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 bg-[#10026B] text-white rounded-lg hover:bg-[#1a0494] transition-colors text-sm font-medium"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    View Photo
+                  </a>
+                </div>
+              )}
+              
+              {teacher.qualification_document_url && (
+                <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg hover:border-[#10026B] transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-[#10026B]/10 rounded-lg">
+                      <FileText className="w-5 h-5 text-[#10026B]" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-700">Qualification Document</p>
+                      <p className="text-xs text-gray-500">Education certificates and qualifications</p>
+                    </div>
+                  </div>
+                  <a
+                    href={teacher.qualification_document_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 bg-[#10026B] text-white rounded-lg hover:bg-[#1a0494] transition-colors text-sm font-medium"
+                  >
+                    <Download className="w-4 h-4" />
+                    Download
+                  </a>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="border-[#E5E5E5] bg-white">
         <CardHeader>

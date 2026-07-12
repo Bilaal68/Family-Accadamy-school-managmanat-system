@@ -41,16 +41,51 @@ class TeacherListSerializer(serializers.ModelSerializer):
 
 class TeacherDetailSerializer(TeacherListSerializer):
     phone = serializers.CharField(source="user.phone", read_only=True)
+    phone_number = serializers.SerializerMethodField()
     is_active = serializers.BooleanField(source="user.is_active", read_only=True)
+    photo_url = serializers.SerializerMethodField()
+    qualification_document_url = serializers.SerializerMethodField()
 
     class Meta(TeacherListSerializer.Meta):
-        fields = TeacherListSerializer.Meta.fields + ("phone", "is_active")
+        fields = TeacherListSerializer.Meta.fields + (
+            "phone", 
+            "phone_number",
+            "is_active", 
+            "photo_url",
+            "qualification_document_url"
+        )
+
+    def get_phone_number(self, obj):
+        # Return phone_number field if it exists (after migration)
+        return getattr(obj, 'phone_number', None)
+
+    def get_photo_url(self, obj):
+        # Check if photo field exists (after migration)
+        if hasattr(obj, 'photo') and obj.photo:
+            request = self.context.get("request")
+            if request:
+                return request.build_absolute_uri(obj.photo.url)
+            return obj.photo.url
+        return None
+
+    def get_qualification_document_url(self, obj):
+        # Check if qualification_document field exists (after migration)
+        if hasattr(obj, 'qualification_document') and obj.qualification_document:
+            request = self.context.get("request")
+            if request:
+                return request.build_absolute_uri(obj.qualification_document.url)
+            return obj.qualification_document.url
+        return None
 
 
 class TeacherCreateSerializer(serializers.Serializer):
+    first_name = serializers.CharField(max_length=100)
+    last_name = serializers.CharField(max_length=100)
     email = serializers.EmailField()
+    phone_number = serializers.CharField(max_length=20, required=False, allow_blank=True)
     password = serializers.CharField(write_only=True, min_length=8)
-    full_name = serializers.CharField(max_length=255)
+    photo = serializers.ImageField(required=False, allow_null=True)
+    qualification_document = serializers.FileField(required=False, allow_null=True)
     joined_at = serializers.DateField(required=False)
     class_id = serializers.UUIDField(required=False, allow_null=True)
 
@@ -75,14 +110,29 @@ class TeacherCreateSerializer(serializers.Serializer):
     def create(self, validated_data):
         class_id = validated_data.pop("class_id", None)
         joined_at = validated_data.pop("joined_at", None) or timezone.localdate()
+        phone_number = validated_data.pop("phone_number", "")
+        photo = validated_data.pop("photo", None)
+        qualification_document = validated_data.pop("qualification_document", None)
+        first_name = validated_data.pop("first_name")
+        last_name = validated_data.pop("last_name")
+        
+        # Combine first and last name for full_name
+        full_name = f"{first_name} {last_name}".strip()
+        
         user = CustomUser.objects.create_user(
             email=validated_data["email"],
             password=validated_data["password"],
-            full_name=validated_data["full_name"],
+            full_name=full_name,
             role=CustomUser.Role.CLASS_TEACHER,
             is_staff=True,
         )
-        teacher = Teacher.objects.create(user=user, joined_at=joined_at)
+        teacher = Teacher.objects.create(
+            user=user, 
+            joined_at=joined_at,
+            phone_number=phone_number,
+            photo=photo,
+            qualification_document=qualification_document
+        )
         if class_id:
             teacher.assigned_class_id = class_id
             teacher.save(update_fields=["assigned_class"])

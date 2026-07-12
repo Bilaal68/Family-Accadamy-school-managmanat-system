@@ -100,9 +100,13 @@ class Command(BaseCommand):
 
     def _seed_classes_and_assignments(self):
         class_defs = [
-            ("Grade 3A", "Grade 3", "A", "teacher1@family.com"),
-            ("Grade 4B", "Grade 4", "B", "teacher2@family.com"),
-            ("Grade 5C", "Grade 5", "C", "teacher3@family.com"),
+            ("KG1-A", "KG1", "A", "teacher1@family.com"),
+            ("KG2-A", "KG2", "A", "teacher2@family.com"),
+            ("KG3-A", "KG3", "A", "teacher3@family.com"),
+            ("Grade 1-A", "Grade 1", "A", "teacher1@family.com"),
+            ("Grade 2-A", "Grade 2", "A", "teacher2@family.com"),
+            ("Grade 3-A", "Grade 3", "A", "teacher3@family.com"),
+            ("Grade 4-A", "Grade 4", "A", "teacher1@family.com"),
         ]
         for name, grade, section, teacher_email in class_defs:
             school_class, created = SchoolClass.objects.get_or_create(
@@ -112,16 +116,18 @@ class Command(BaseCommand):
             if created:
                 self.stdout.write(f"  Created class: {name}")
 
-            teacher = Teacher.objects.select_related("user").get(
-                user__email=teacher_email
-            )
-            if teacher.assigned_class_id != school_class.id:
-                teacher.assigned_class = school_class
-                try:
-                    teacher.save()
-                except Exception:
-                    # Teacher already has a class assigned, skip
-                    pass
+            # Only assign teacher to first 3 classes to avoid conflicts
+            if name in ["KG1-A", "KG2-A", "KG3-A"]:
+                teacher = Teacher.objects.select_related("user").get(
+                    user__email=teacher_email
+                )
+                if teacher.assigned_class_id != school_class.id:
+                    teacher.assigned_class = school_class
+                    try:
+                        teacher.save()
+                    except Exception:
+                        # Teacher already has a class assigned, skip
+                        pass
 
         for user in CustomUser.objects.filter(role=CustomUser.Role.CLASS_TEACHER):
             teacher, created = Teacher.objects.get_or_create(
@@ -136,21 +142,19 @@ class Command(BaseCommand):
     def _seed_students(self):
         parent_one = CustomUser.objects.get(phone="+1234567890")
         parent_two = CustomUser.objects.get(phone="+0987654321")
-        grade_3a = SchoolClass.objects.get(name="Grade 3A")
-        grade_4b = SchoolClass.objects.get(name="Grade 4B")
-        grade_5c = SchoolClass.objects.get(name="Grade 5C")
+        kg1_a = SchoolClass.objects.get(name="KG1-A")
+        kg2_a = SchoolClass.objects.get(name="KG2-A")
+        kg3_a = SchoolClass.objects.get(name="KG3-A")
+        grade_1a = SchoolClass.objects.get(name="Grade 1-A")
+        grade_3a = SchoolClass.objects.get(name="Grade 3-A")
 
         student_defs = [
-            ("Alice Johnson", date(2017, 3, 12), Student.Gender.FEMALE, grade_3a),
-            ("Bob Smith", date(2017, 7, 8), Student.Gender.MALE, grade_3a),
-            ("Charlie Brown", date(2017, 1, 20), Student.Gender.MALE, grade_3a),
-            ("Diana Prince", date(2017, 11, 5), Student.Gender.FEMALE, grade_3a),
-            ("Ethan Hunt", date(2016, 5, 15), Student.Gender.MALE, grade_4b),
-            ("Fiona Green", date(2016, 9, 22), Student.Gender.FEMALE, grade_4b),
-            ("George Hall", date(2016, 2, 28), Student.Gender.MALE, grade_4b),
-            ("Hannah Lee", date(2015, 4, 10), Student.Gender.FEMALE, grade_5c),
-            ("Ian Wright", date(2015, 8, 3), Student.Gender.MALE, grade_5c),
-            ("Julia Adams", date(2015, 12, 18), Student.Gender.FEMALE, grade_5c),
+            ("Alice Johnson", date(2020, 3, 12), Student.Gender.FEMALE, kg1_a),
+            ("Bob Smith", date(2020, 7, 8), Student.Gender.MALE, kg1_a),
+            ("Charlie Brown", date(2019, 1, 20), Student.Gender.MALE, kg2_a),
+            ("Diana Prince", date(2019, 11, 5), Student.Gender.FEMALE, kg3_a),
+            ("Ethan Hunt", date(2018, 5, 15), Student.Gender.MALE, grade_1a),
+            ("Fiona Green", date(2017, 9, 22), Student.Gender.FEMALE, grade_3a),
         ]
 
         created_students = []

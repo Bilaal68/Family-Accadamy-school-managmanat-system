@@ -65,16 +65,11 @@ class EnrollmentDetailSerializer(serializers.ModelSerializer):
             "student_type",
             "gender",
             "date_of_birth",
-            "place_of_birth",
             "nationality",
             "photo_url",
-            # Contact
-            "phone_number",
-            "email",
             # Academic
             "academic_year",
             "grade_applying",
-            "section_preference",
             "enrollment_date",
             "previous_school",
             "is_transfer",
@@ -102,10 +97,8 @@ class EnrollmentDetailSerializer(serializers.ModelSerializer):
             "emergency_contact_name",
             "emergency_contact_relationship",
             "emergency_contact_phone",
-            # Fee
+            # Payment
             "registration_fee_paid",
-            "tuition_plan",
-            "scholarship_discount",
             "payment_status",
             "fee_receipt_url",
             # Workflow
@@ -373,10 +366,6 @@ class EnrollmentReviewSerializer(serializers.Serializer):
     )
     registration_fee_paid = serializers.DecimalField(
         max_digits=10, decimal_places=2, required=False
-    )
-    tuition_plan = serializers.CharField(required=False, allow_blank=True)
-    scholarship_discount = serializers.DecimalField(
-        max_digits=5, decimal_places=2, required=False
     )
 
 

@@ -30,8 +30,6 @@ export default function EnrollmentDetail() {
   const navigate = useNavigate();
   const [cashierNotes, setCashierNotes] = useState("");
   const [registrationFeePaid, setRegistrationFeePaid] = useState("");
-  const [tuitionPlan, setTuitionPlan] = useState("");
-  const [scholarshipDiscount, setScholarshipDiscount] = useState("");
   const [paymentStatus, setPaymentStatus] = useState("");
 
   const enrollmentQ = useQuery({
@@ -86,8 +84,6 @@ export default function EnrollmentDetail() {
       cashier_notes: cashierNotes,
       payment_status: paymentStatus,
       registration_fee_paid: registrationFeePaid || 0,
-      tuition_plan: tuitionPlan,
-      scholarship_discount: scholarshipDiscount || 0,
     });
   };
 
@@ -195,28 +191,8 @@ export default function EnrollmentDetail() {
                 </p>
               </div>
               <div>
-                <Label>Place of Birth</Label>
-                <p>{enrollment.place_of_birth || "—"}</p>
-              </div>
-              <div>
                 <Label>Nationality</Label>
                 <p>{enrollment.nationality}</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Contact Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label>Phone Number</Label>
-                <p>{enrollment.phone_number || "—"}</p>
-              </div>
-              <div>
-                <Label>Email</Label>
-                <p>{enrollment.email || "—"}</p>
               </div>
             </CardContent>
           </Card>
@@ -233,10 +209,6 @@ export default function EnrollmentDetail() {
               <div>
                 <Label>Grade Applying For</Label>
                 <p>{enrollment.grade_applying}</p>
-              </div>
-              <div>
-                <Label>Section Preference</Label>
-                <p>{enrollment.section_preference || "—"}</p>
               </div>
               <div>
                 <Label>Student Type</Label>
@@ -360,7 +332,7 @@ export default function EnrollmentDetail() {
               {enrollment.status === "PENDING" && (
                 <>
                   <div className="space-y-4">
-                    <h3 className="font-medium">Fee Information</h3>
+                    <h3 className="font-medium">Payment Information</h3>
                     <div>
                       <Label>Registration Fee Paid</Label>
                       <Input
@@ -368,23 +340,6 @@ export default function EnrollmentDetail() {
                         value={registrationFeePaid}
                         onChange={(e) => setRegistrationFeePaid(e.target.value)}
                         placeholder="0.00"
-                      />
-                    </div>
-                    <div>
-                      <Label>Tuition Plan</Label>
-                      <Input
-                        value={tuitionPlan}
-                        onChange={(e) => setTuitionPlan(e.target.value)}
-                        placeholder="e.g., Annual, Semester"
-                      />
-                    </div>
-                    <div>
-                      <Label>Scholarship/Discount (%)</Label>
-                      <Input
-                        type="number"
-                        value={scholarshipDiscount}
-                        onChange={(e) => setScholarshipDiscount(e.target.value)}
-                        placeholder="0"
                       />
                     </div>
                     <div>
@@ -402,10 +357,6 @@ export default function EnrollmentDetail() {
                           <SelectItem value="PAID">Paid</SelectItem>
                         </SelectContent>
                       </Select>
-                    </div>
-                    <div>
-                      <Label>Fee Receipt</Label>
-                      <Input type="file" />
                     </div>
                   </div>
 

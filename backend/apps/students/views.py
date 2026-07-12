@@ -58,6 +58,10 @@ class StudentFilter(filters.FilterSet):
 
 
 class StudentViewSet(viewsets.ModelViewSet):
+    """
+    Manage student records. Admin has full access.
+    Teachers can view students in their assigned class only.
+    """
     queryset = Student.objects.select_related("school_class").prefetch_related(
         "parent_links__parent"
     )

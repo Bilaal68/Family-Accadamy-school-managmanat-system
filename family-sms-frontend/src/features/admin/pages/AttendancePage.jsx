@@ -1,7 +1,8 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format, parseISO, subDays } from "date-fns";
-import { Download } from "lucide-react";
+import { Download, UserCheck } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 
 import {
@@ -9,6 +10,8 @@ import {
   fetchAttendance,
 } from "@/api/attendance";
 import { fetchClassStudentsList, fetchClassesList } from "@/api/classes";
+import { fetchTeachersList } from "@/api/teachers";
+import client from "@/api/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,6 +39,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SectionError from "@/components/shared/SectionError";
 
 function StatusBadge({ status }) {
@@ -51,6 +55,18 @@ function StatusBadge({ status }) {
       {cfg.label}
     </Badge>
   );
+}
+
+function TeacherStatusBadge({ status }) {
+  if (!status) return <span className="text-neutral-300">—</span>;
+  const map = {
+    PRESENT: { label: "Present", className: "bg-green-100 text-green-800" },
+    ABSENT: { label: "Absent", className: "bg-red-100 text-red-800" },
+    LATE: { label: "Late", className: "bg-amber-100 text-amber-800" },
+    ON_LEAVE: { label: "On Leave", className: "bg-blue-100 text-blue-800" },
+  };
+  const cfg = map[status] || { label: status, className: "bg-neutral-100" };
+  return <Badge className={cfg.className}>{cfg.label}</Badge>;
 }
 
 function computeMonthlySummary(students, records) {
@@ -74,11 +90,18 @@ function computeMonthlySummary(students, records) {
 }
 
 export default function AttendancePage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") || "students";
+  
   const today = format(new Date(), "yyyy-MM-dd");
   const [selectedDate, setSelectedDate] = useState(today);
   const [classId, setClassId] = useState("");
   const [popover, setPopover] = useState(null);
   const [sendOpen, setSendOpen] = useState(false);
+
+  const handleTabChange = (value) => {
+    setSearchParams({ tab: value });
+  };
 
   const classesQ = useQuery({
     queryKey: ["classes"],
@@ -178,9 +201,72 @@ export default function AttendancePage() {
   }, [gridQ.data]);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
+      <h1 className="text-2xl font-semibold text-black">Attendance Management</h1>
+      
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
+        <TabsList className="bg-neutral-100">
+          <TabsTrigger value="students">📚 Student Attendance</TabsTrigger>
+          <TabsTrigger value="teachers">🎓 Teacher Attendance</TabsTrigger>
+        </TabsList>
+
+        {/* STUDENT ATTENDANCE TAB */}
+        <TabsContent value="students" className="space-y-8 mt-6">
+          <StudentAttendanceTab
+            selectedDate={selectedDate}
+            setSelectedDate={setSelectedDate}
+            classId={classId}
+            setClassId={setClassId}
+            classes={classes}
+            gridDays={gridDays}
+            gridQ={gridQ}
+            monthQ={monthQ}
+            studentsQ={studentsQ}
+            exportMut={exportMut}
+            sendMut={sendMut}
+            monthlySummary={monthlySummary}
+            recordMap={recordMap}
+            popover={popover}
+            setPopover={setPopover}
+            sendOpen={sendOpen}
+            setSendOpen={setSendOpen}
+            monthKey={monthKey}
+          />
+        </TabsContent>
+
+        {/* TEACHER ATTENDANCE TAB */}
+        <TabsContent value="teachers" className="space-y-8 mt-6">
+          <TeacherAttendanceTab selectedDate={selectedDate} />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+// Student Attendance Tab Component
+function StudentAttendanceTab({
+  selectedDate,
+  setSelectedDate,
+  classId,
+  setClassId,
+  classes,
+  gridDays,
+  gridQ,
+  monthQ,
+  studentsQ,
+  exportMut,
+  sendMut,
+  monthlySummary,
+  recordMap,
+  popover,
+  setPopover,
+  sendOpen,
+  setSendOpen,
+  monthKey,
+}) {
+  return (
+    <>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <h1 className="text-2xl font-semibold text-black">Attendance</h1>
         <div className="flex flex-wrap items-end gap-3">
           <div className="space-y-1">
             <Label htmlFor="att-date">Date</Label>
@@ -378,6 +464,246 @@ export default function AttendancePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </>
+  );
+}
+
+// Teacher Attendance Tab Component
+function TeacherAttendanceTab({ selectedDate }) {
+  const qc = useQueryClient();
+  const today = format(new Date(), "yyyy-MM-dd");
+  const [markDate, setMarkDate] = useState(today);
+  const [selectedTeachers, setSelectedTeachers] = useState({});
+
+  // Fetch all teachers
+  const teachersQ = useQuery({
+    queryKey: ["teachers"],
+    queryFn: async () => {
+      const data = await fetchTeachersList();
+      return data.teachers || [];
+    },
+  });
+
+  // Fetch teacher attendance for selected date
+  const attendanceQ = useQuery({
+    queryKey: ["teacher-attendance", markDate],
+    queryFn: async () => {
+      const { data } = await client.get(`/attendance/teachers/?date=${markDate}`);
+      return data || [];
+    },
+  });
+
+  // Mark teacher attendance mutation
+  const markMut = useMutation({
+    mutationFn: async (entries) => {
+      const { data } = await client.post("/attendance/teachers/mark/", { entries });
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Teacher attendance marked successfully");
+      qc.invalidateQueries({ queryKey: ["teacher-attendance"] });
+      qc.invalidateQueries({ queryKey: ["teacher-att-today"] });
+      setSelectedTeachers({});
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.detail || "Failed to mark attendance");
+    },
+  });
+
+  // Build attendance map
+  const attendanceMap = useMemo(() => {
+    const map = {};
+    (attendanceQ.data || []).forEach((record) => {
+      map[record.teacher_id] = record;
+    });
+    return map;
+  }, [attendanceQ.data]);
+
+  const handleStatusChange = (teacherId, status) => {
+    setSelectedTeachers((prev) => ({
+      ...prev,
+      [teacherId]: status,
+    }));
+  };
+
+  const handleMarkAll = (status) => {
+    const updates = {};
+    (teachersQ.data || []).forEach((teacher) => {
+      updates[teacher.id] = status;
+    });
+    setSelectedTeachers(updates);
+  };
+
+  const handleSubmit = () => {
+    const entries = Object.entries(selectedTeachers).map(([teacher_id, status]) => ({
+      teacher_id,
+      status,
+      notes: "",
+    }));
+
+    if (entries.length === 0) {
+      toast.error("Please select at least one teacher");
+      return;
+    }
+
+    markMut.mutate(entries);
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header Controls */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="space-y-1">
+          <Label htmlFor="teacher-att-date">Date</Label>
+          <Input
+            id="teacher-att-date"
+            type="date"
+            value={markDate}
+            onChange={(e) => setMarkDate(e.target.value)}
+            className="w-40"
+          />
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleMarkAll("PRESENT")}
+            className="bg-green-50 border-green-200 hover:bg-green-100"
+          >
+            <UserCheck className="w-4 h-4 mr-2" />
+            Mark All Present
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setSelectedTeachers({})}
+          >
+            Clear Selection
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={markMut.isPending || Object.keys(selectedTeachers).length === 0}
+            className="bg-[#10026B] hover:bg-[#1a0494]"
+          >
+            {markMut.isPending ? "Saving..." : `Save Attendance (${Object.keys(selectedTeachers).length})`}
+          </Button>
+        </div>
+      </div>
+
+      {/* Teacher List */}
+      <div className="rounded-lg border border-[#E5E5E5] bg-white p-4">
+        <h2 className="mb-4 text-sm font-medium uppercase tracking-wide text-neutral-500">
+          Mark Teacher Attendance - {format(parseISO(markDate), "EEEE, MMMM d, yyyy")}
+        </h2>
+
+        {teachersQ.isLoading && (
+          <div className="space-y-3">
+            <div className="h-12 animate-pulse rounded bg-neutral-100" />
+            <div className="h-12 animate-pulse rounded bg-neutral-100" />
+            <div className="h-12 animate-pulse rounded bg-neutral-100" />
+            <p className="text-center text-sm text-neutral-500 py-4">Loading teachers...</p>
+          </div>
+        )}
+
+        {teachersQ.isError && (
+          <SectionError
+            message="Could not load teachers."
+            onRetry={() => teachersQ.refetch()}
+          />
+        )}
+
+        {!teachersQ.isLoading && !teachersQ.isError && (
+          <>
+            {(teachersQ.data || []).length === 0 ? (
+              <div className="text-center py-12 bg-amber-50 border border-amber-200 rounded-lg">
+                <p className="text-amber-700 font-medium mb-2">No teachers found</p>
+                <p className="text-sm text-amber-600">
+                  Please add teachers first in the Teachers section.
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Staff ID</TableHead>
+                      <TableHead>Teacher Name</TableHead>
+                      <TableHead>Assigned Class</TableHead>
+                      <TableHead className="text-center">Current Status</TableHead>
+                      <TableHead className="text-center">Mark As</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(teachersQ.data || []).map((teacher) => {
+                      const existingRecord = attendanceMap[teacher.id];
+                      const currentStatus = selectedTeachers[teacher.id] || existingRecord?.status || "";
+
+                      return (
+                        <TableRow key={teacher.id}>
+                          <TableCell className="font-mono text-sm">
+                            {teacher.staff_id}
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {teacher.full_name}
+                          </TableCell>
+                          <TableCell className="text-sm text-neutral-600">
+                            {teacher.assigned_class_name || (
+                              <span className="text-amber-600">Unassigned</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {existingRecord ? (
+                              <TeacherStatusBadge status={existingRecord.status} />
+                            ) : (
+                              <span className="text-neutral-400 text-sm">Not marked</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex justify-center gap-2">
+                              <Button
+                                size="sm"
+                                variant={currentStatus === "PRESENT" ? "default" : "outline"}
+                                onClick={() => handleStatusChange(teacher.id, "PRESENT")}
+                                className={currentStatus === "PRESENT" ? "bg-green-600 hover:bg-green-700" : ""}
+                              >
+                                Present
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant={currentStatus === "ABSENT" ? "default" : "outline"}
+                                onClick={() => handleStatusChange(teacher.id, "ABSENT")}
+                                className={currentStatus === "ABSENT" ? "bg-red-600 hover:bg-red-700" : ""}
+                              >
+                                Absent
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant={currentStatus === "LATE" ? "default" : "outline"}
+                                onClick={() => handleStatusChange(teacher.id, "LATE")}
+                                className={currentStatus === "LATE" ? "bg-amber-600 hover:bg-amber-700" : ""}
+                              >
+                                Late
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant={currentStatus === "ON_LEAVE" ? "default" : "outline"}
+                                onClick={() => handleStatusChange(teacher.id, "ON_LEAVE")}
+                                className={currentStatus === "ON_LEAVE" ? "bg-blue-600 hover:bg-blue-700" : ""}
+                              >
+                                On Leave
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

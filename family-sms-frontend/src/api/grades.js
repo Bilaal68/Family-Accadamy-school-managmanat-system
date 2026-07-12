@@ -23,3 +23,25 @@ export function approveGrade(id) {
 export function fetchGradeAverages(params) {
   return client.get("/grades/averages/", { params });
 }
+
+// Subject Summary endpoint
+export function fetchSubjectSummary(params) {
+  return client.get("/grades/subject_summary/", { params });
+}
+
+// Subject API endpoints
+export function fetchSubjects() {
+  return client.get("/grades/subjects/");
+}
+
+export function createSubject(data) {
+  return client.post("/grades/subjects/", data);
+}
+
+export function updateSubject(data) {
+  return client.put("/grades/subjects/", data);
+}
+
+export function deleteSubject(id) {
+  return client.delete("/grades/subjects/", { params: { id } });
+}

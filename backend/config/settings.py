@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "django_filters",
     "storages",
+    "drf_spectacular",
     # Local apps
     "apps.accounts",
     "apps.students",
@@ -203,6 +204,7 @@ REST_FRAMEWORK = {
     "DEFAULT_FILTER_BACKENDS": (
         "django_filters.rest_framework.DjangoFilterBackend",
     ),
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
 SIMPLE_JWT = {
@@ -212,6 +214,17 @@ SIMPLE_JWT = {
     "BLACKLIST_AFTER_ROTATION": True,
     "ACCESS_TOKEN_CLASS": "apps.accounts.tokens.CustomAccessToken",
     "REFRESH_TOKEN_CLASS": "apps.accounts.tokens.CustomRefreshToken",
+}
+
+# ---------------------------------------------------------------------------
+# DRF Spectacular (API Documentation)
+# ---------------------------------------------------------------------------
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Family School Management System API",
+    "DESCRIPTION": "Complete API documentation for Family SMS — covering Admin, Teacher, and Cashier roles.",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
 }
 
 # ---------------------------------------------------------------------------

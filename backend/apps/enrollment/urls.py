@@ -3,6 +3,7 @@ from django.urls import path
 from .views import (
     EnrollmentApproveView,
     EnrollmentApplyView,
+    EnrollmentCashierRejectView,
     EnrollmentDetailView,
     EnrollmentListView,
     EnrollmentRejectView,
@@ -23,6 +24,7 @@ urlpatterns = [
     path("", EnrollmentListView.as_view(), name="enrollment-list"),
     path("<uuid:id>/", EnrollmentDetailView.as_view(), name="enrollment-detail"),
     path("<uuid:id>/review/", EnrollmentReviewView.as_view(), name="enrollment-review"),
+    path("<uuid:id>/cashier-reject/", EnrollmentCashierRejectView.as_view(), name="enrollment-cashier-reject"),
     path("<uuid:id>/approve/", EnrollmentApproveView.as_view(), name="enrollment-approve"),
     path("<uuid:id>/reject/", EnrollmentRejectView.as_view(), name="enrollment-reject"),
     path("stats/", EnrollmentStatsView.as_view(), name="enrollment-stats"),

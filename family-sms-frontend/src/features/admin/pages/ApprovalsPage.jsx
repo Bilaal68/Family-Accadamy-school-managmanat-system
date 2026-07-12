@@ -194,6 +194,7 @@ function MarksApprovalsTab() {
         const isNew = newItemKeys.has(group.key);
         const subject = group.items?.[0]?.subject || "";
         const semester = group.items?.[0]?.semester_display || group.items?.[0]?.semester || "";
+        const assessmentType = group.items?.[0]?.assessment_type_display || group.items?.[0]?.assessment_type || "";
         
         return (
           <li
@@ -219,7 +220,7 @@ function MarksApprovalsTab() {
                 <div>
                   <p className="font-medium text-black">{group.className}</p>
                   <p className="text-sm text-neutral-600">
-                    {group.teacherName} · {subject} · {semester} · {(group.items || []).length} student
+                    {group.teacherName} · {subject} · {semester} {assessmentType ? `· ${assessmentType}` : ""} · {(group.items || []).length} student
                     {(group.items || []).length !== 1 ? "s" : ""}
                   </p>
                   <p className="text-xs text-neutral-500">
@@ -247,6 +248,7 @@ function MarksApprovalsTab() {
                     <TableRow>
                       <TableHead>Student</TableHead>
                       <TableHead>Subject</TableHead>
+                      <TableHead>Assessment Type</TableHead>
                       <TableHead>Score</TableHead>
                       <TableHead>Semester</TableHead>
                       <TableHead />
@@ -257,6 +259,7 @@ function MarksApprovalsTab() {
                       <TableRow key={m.id}>
                         <TableCell>{m.student_name}</TableCell>
                         <TableCell>{m.subject}</TableCell>
+                        <TableCell>{m.assessment_type_display || m.assessment_type || "—"}</TableCell>
                         <TableCell>{m.score}</TableCell>
                         <TableCell>{m.semester_display || m.semester}</TableCell>
                         <TableCell className="text-right">

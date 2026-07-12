@@ -17,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SectionError from "@/components/shared/SectionError";
 import { PanelSkeleton } from "@/components/shared/SectionSkeleton";
 import { useTeacherClass } from "@/hooks/useTeacherClass";
+import StudentAvatar from "@/features/admin/pages/students/StudentAvatar";
 
 export default function TeacherClassPage() {
   const { classId, className } = useTeacherClass();
@@ -103,9 +104,24 @@ export default function TeacherClassPage() {
               {!studentsQ.isLoading && !studentsQ.isError && (
                 <ul className="divide-y divide-brand">
                   {(studentsQ.data?.results ?? []).map((s) => (
-                    <li key={s.id} className="flex justify-between py-3 text-sm">
-                      <span className="font-medium text-heading">{s.full_name}</span>
-                      <span className="font-mono text-muted-label">{s.student_id}</span>
+                    <li key={s.id} className="flex items-center justify-between py-3 hover:bg-gray-50 px-2 rounded transition-colors">
+                      <div className="flex items-center gap-3">
+                        <StudentAvatar 
+                          photo={s.photo}
+                          name={s.full_name}
+                          className="h-10 w-10"
+                        />
+                        <div>
+                          <p className="font-medium text-heading">{s.full_name}</p>
+                          <p className="text-xs text-muted-label font-mono">{s.student_id}</p>
+                        </div>
+                      </div>
+                      {s.overall_average !== null && s.overall_average !== undefined && (
+                        <div className="text-right">
+                          <p className="text-sm font-semibold text-[#10026B]">{s.overall_average}%</p>
+                          <p className="text-xs text-gray-500">Average</p>
+                        </div>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -126,13 +142,18 @@ export default function TeacherClassPage() {
                   {(leaderboardQ.data ?? []).map((e) => (
                     <li
                       key={e.student_id}
-                      className="flex items-center justify-between rounded-md bg-page/60 px-3 py-2 text-sm"
+                      className="flex items-center justify-between rounded-md bg-page/60 px-3 py-2 hover:bg-page transition-colors"
                     >
-                      <span>
-                        <span className="mr-2 font-bold text-accent">#{e.rank}</span>
-                        {e.full_name}
-                      </span>
-                      <span className="font-semibold tabular-nums">{e.overall_average}</span>
+                      <div className="flex items-center gap-3">
+                        <span className="font-bold text-accent text-lg min-w-[2rem]">#{e.rank}</span>
+                        <StudentAvatar 
+                          photo={e.photo}
+                          name={e.full_name}
+                          className="h-9 w-9"
+                        />
+                        <span className="font-medium">{e.full_name}</span>
+                      </div>
+                      <span className="font-semibold tabular-nums text-[#10026B]">{e.overall_average}%</span>
                     </li>
                   ))}
                 </ol>
@@ -185,7 +206,16 @@ export default function TeacherClassPage() {
                         <TableBody>
                           {(studentsQ.data?.results ?? []).map((student) => (
                             <TableRow key={student.id}>
-                              <TableCell className="font-medium">{student.full_name}</TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <StudentAvatar 
+                                    photo={student.photo}
+                                    name={student.full_name}
+                                    className="h-8 w-8"
+                                  />
+                                  <span className="font-medium">{student.full_name}</span>
+                                </div>
+                              </TableCell>
                               {subjectAverages.map((sub) => {
                                 const sem1 = (gradesQ.data ?? []).find(
                                   (g) => g.student_id === student.id && g.subject === sub.subject && g.semester === "SEMESTER_1" && g.approved_at

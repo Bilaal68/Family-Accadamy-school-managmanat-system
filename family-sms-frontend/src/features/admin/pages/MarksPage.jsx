@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 
 import { fetchClassStudentsList, fetchClassesList } from "@/api/classes";
-import { fetchGrades } from "@/api/grades";
+import { fetchGrades, fetchSubjects } from "@/api/grades";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -70,6 +70,28 @@ export default function MarksPage() {
   const [classId, setClassId] = useState("");
   const [term, setTerm] = useState("all");
   const [subject, setSubject] = useState("all");
+  const [assessmentType, setAssessmentType] = useState("all");
+
+  // Define all available semester and assessment type options
+  const SEMESTER_OPTIONS = [
+    { value: "all", label: "All terms" },
+    { value: "SEMESTER_1", label: "Semester 1" },
+    { value: "SEMESTER_2", label: "Semester 2" },
+    { value: "FINAL", label: "Final" },
+  ];
+
+  const ASSESSMENT_TYPE_OPTIONS = [
+    { value: "all", label: "All assessment types" },
+    { value: "TEST", label: "Test" },
+    { value: "QUIZ", label: "Quiz" },
+    { value: "ASSIGNMENT", label: "Assignment" },
+    { value: "PROJECT", label: "Project" },
+    { value: "MID_EXAM", label: "Mid Exam" },
+    { value: "FINAL_EXAM", label: "Final Exam" },
+    { value: "HOMEWORK", label: "Homework" },
+    { value: "PARTICIPATION", label: "Class Participation" },
+    { value: "OTHER", label: "Other" },
+  ];
 
   const classesQ = useQuery({
     queryKey: ["classes"],
@@ -80,10 +102,11 @@ export default function MarksPage() {
   });
 
   const gradesQ = useQuery({
-    queryKey: ["marks", classId, term],
+    queryKey: ["marks", classId, term, assessmentType],
     queryFn: async () => {
       const params = { class: classId };
       if (term !== "all") params.term = term;
+      if (assessmentType !== "all") params.assessment_type = assessmentType;
       const { data } = await fetchGrades(params);
       return Array.isArray(data) ? data : [];
     },
@@ -99,17 +122,30 @@ export default function MarksPage() {
     enabled: !!classId,
   });
 
-  const terms = useMemo(() => {
-    const set = new Set((gradesQ.data ?? []).map((m) => m.term).filter(Boolean));
-    return ["all", ...Array.from(set).sort()];
-  }, [gradesQ.data]);
+  // Fetch official subjects from the teacher subjects table
+  const subjectsQ = useQuery({
+    queryKey: ["subjects"],
+    queryFn: async () => {
+      const { data } = await fetchSubjects();
+      return Array.isArray(data) ? data : [];
+    },
+  });
 
   const subjects = useMemo(() => {
-    const set = new Set(
-      (gradesQ.data ?? []).map((m) => m.subject).filter(Boolean)
+    // Get official subject names from the database
+    const officialSubjectNames = new Set(
+      (subjectsQ.data ?? []).map((s) => s.name).filter(Boolean)
     );
-    return ["all", ...Array.from(set).sort()];
-  }, [gradesQ.data]);
+    
+    // Filter marks subjects to only include official subjects
+    const marksSubjectNames = new Set(
+      (gradesQ.data ?? [])
+        .map((m) => m.subject)
+        .filter((s) => s && officialSubjectNames.has(s))
+    );
+    
+    return ["all", ...Array.from(marksSubjectNames).sort()];
+  }, [gradesQ.data, subjectsQ.data]);
 
   const table = useMemo(() => {
     if (!studentsQ.data) return null;
@@ -140,12 +176,12 @@ export default function MarksPage() {
           <Label>Term</Label>
           <Select value={term} onValueChange={setTerm} disabled={!classId}>
             <SelectTrigger className="w-36">
-              <SelectValue />
+              <SelectValue placeholder="Select term" />
             </SelectTrigger>
             <SelectContent>
-              {terms.map((t) => (
-                <SelectItem key={t} value={t}>
-                  {t === "all" ? "All terms" : t}
+              {SEMESTER_OPTIONS.map((t) => (
+                <SelectItem key={t.value} value={t.value}>
+                  {t.label}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -155,12 +191,27 @@ export default function MarksPage() {
           <Label>Subject</Label>
           <Select value={subject} onValueChange={setSubject} disabled={!classId}>
             <SelectTrigger className="w-40">
-              <SelectValue />
+              <SelectValue placeholder="Select subject" />
             </SelectTrigger>
             <SelectContent>
               {subjects.map((s) => (
                 <SelectItem key={s} value={s}>
                   {s === "all" ? "All subjects" : s}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <Label>Assessment Type</Label>
+          <Select value={assessmentType} onValueChange={setAssessmentType} disabled={!classId}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Select assessment type" />
+            </SelectTrigger>
+            <SelectContent>
+              {ASSESSMENT_TYPE_OPTIONS.map((a) => (
+                <SelectItem key={a.value} value={a.value}>
+                  {a.label}
                 </SelectItem>
               ))}
             </SelectContent>

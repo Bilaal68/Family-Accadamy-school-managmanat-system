@@ -143,13 +143,20 @@ class AttendanceRecordSerializer(serializers.ModelSerializer):
 
 
 class MarkEntrySerializer(serializers.ModelSerializer):
+    semester_display = serializers.CharField(source="get_semester_display", read_only=True)
+    assessment_type_display = serializers.CharField(source="get_assessment_type_display", read_only=True)
+    
     class Meta:
         model = MarkEntry
         fields = (
             "id",
             "subject",
             "score",
-            "term",
+            "semester",
+            "semester_display",
+            "assessment_type",
+            "assessment_type_display",
+            "remarks",
             "submitted_at",
             "approved_at",
         )

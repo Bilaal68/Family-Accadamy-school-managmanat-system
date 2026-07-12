@@ -21,6 +21,9 @@ class Teacher(models.Model):
         related_name="class_teacher",
     )
     staff_id = models.CharField(max_length=20, unique=True, editable=False)
+    phone_number = models.CharField(max_length=20, blank=True, default="")
+    photo = models.ImageField(upload_to="teachers/photos/", null=True, blank=True)
+    qualification_document = models.FileField(upload_to="teachers/qualifications/", null=True, blank=True)
     joined_at = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
 

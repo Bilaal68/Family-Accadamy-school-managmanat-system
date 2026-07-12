@@ -107,6 +107,21 @@ export default function AdminSidebar({ items, user, onLogout }) {
           <LogOut className="h-4 w-4" />
           Sign out
         </button>
+        
+        {/* VRLX Digital Credit */}
+        <div className="mt-4 border-t border-white/10 pt-3">
+          <p className="text-center text-xs text-white/50">
+            Built by{" "}
+            <a
+              href="https://vrlx-digital.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-white/70 hover:text-accent transition-colors"
+            >
+              VRLX Digital
+            </a>
+          </p>
+        </div>
       </div>
     </aside>
   );

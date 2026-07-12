@@ -33,6 +33,10 @@ from apps.students.models import Student
 
 
 class MarkAttendanceView(APIView):
+    """
+    Mark daily attendance for students. Admins can mark for all classes.
+    Teachers can mark only for their assigned class.
+    """
     permission_classes = [IsAdminOrTeacherMarking]
 
     def post(self, request):
@@ -73,6 +77,10 @@ class MarkAttendanceView(APIView):
 
 
 class AttendanceListView(APIView):
+    """
+    Retrieve attendance records with filtering by class, student, date, or date range.
+    Returns records based on user role permissions.
+    """
     permission_classes = [IsAuthenticated, CanViewAttendance]
 
     def get(self, request):
@@ -241,3 +249,99 @@ class SendAttendanceParentsView(APIView):
             str(class_id), str(date_from), str(date_to)
         )
         return Response({"task_id": task.id}, status=status.HTTP_202_ACCEPTED)
+
+
+
+class MarkTeacherAttendanceView(APIView):
+    """Mark teacher attendance - Admin only"""
+    permission_classes = [IsAdmin]
+
+    def post(self, request):
+        from apps.attendance.serializers import TeacherAttendanceMarkSerializer, TeacherAttendanceSerializer
+        from apps.attendance.models import TeacherAttendance
+        from apps.teachers.models import Teacher
+        
+        serializer = TeacherAttendanceMarkSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        today = timezone.localdate()
+        saved = []
+
+        for entry in serializer.validated_data["entries"]:
+            teacher = get_object_or_404(Teacher, pk=entry["teacher_id"])
+            
+            record, _ = TeacherAttendance.objects.update_or_create(
+                teacher=teacher,
+                date=today,
+                defaults={
+                    "status": entry["status"],
+                    "notes": entry.get("notes", ""),
+                    "marked_by": request.user,
+                },
+            )
+            saved.append(record)
+
+        return Response(
+            TeacherAttendanceSerializer(saved, many=True).data,
+            status=status.HTTP_200_OK,
+        )
+
+
+class TeacherAttendanceListView(APIView):
+    """List teacher attendance records"""
+    permission_classes = [IsAuthenticated, IsAdmin]
+
+    def get(self, request):
+        from apps.attendance.serializers import TeacherAttendanceSerializer
+        from apps.attendance.models import TeacherAttendance
+        
+        queryset = TeacherAttendance.objects.select_related("teacher", "marked_by")
+
+        teacher_id = request.query_params.get("teacher")
+        date_param = request.query_params.get("date")
+        month_param = request.query_params.get("month")
+
+        if teacher_id:
+            queryset = queryset.filter(teacher_id=teacher_id)
+
+        if date_param == "today":
+            queryset = queryset.filter(date=timezone.localdate())
+        elif date_param:
+            queryset = queryset.filter(date=date_param)
+
+        if month_param:
+            try:
+                year, month = map(int, month_param.split("-"))
+                queryset = queryset.filter(date__year=year, date__month=month)
+            except ValueError:
+                return Response(
+                    {"detail": "month must be in YYYY-MM format."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        return Response(TeacherAttendanceSerializer(queryset, many=True).data)
+
+
+class TeacherAttendanceTodaySummaryView(APIView):
+    """Get today's teacher attendance summary"""
+    permission_classes = [IsAuthenticated, IsAdmin]
+
+    def get(self, request):
+        from apps.teachers.models import Teacher
+        from apps.attendance.models import TeacherAttendance
+        
+        today = timezone.localdate()
+        
+        # Get total active teachers
+        total_teachers = Teacher.objects.filter(user__is_active=True).count()
+        
+        # Get present teachers today
+        present_count = TeacherAttendance.objects.filter(
+            date=today,
+            status=TeacherAttendance.Status.PRESENT
+        ).count()
+        
+        return Response({
+            "total": total_teachers,
+            "present": present_count,
+            "date": today
+        })

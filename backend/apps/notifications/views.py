@@ -93,6 +93,45 @@ class AnnouncementListView(APIView):
         return Response(AnnouncementSerializer(queryset, many=True).data)
 
 
+class AnnouncementDetailView(APIView):
+    permission_classes = [IsAuthenticated, IsAdmin]
+
+    def get_announcement(self, pk):
+        return get_object_or_404(Announcement, pk=pk)
+
+    def get(self, request, pk):
+        announcement = self.get_announcement(pk)
+        return Response(AnnouncementSerializer(announcement).data)
+
+    def put(self, request, pk):
+        announcement = self.get_announcement(pk)
+        data = request.data
+        
+        # Update fields
+        if "title" in data:
+            announcement.title = data["title"]
+        if "message" in data:
+            announcement.message = data["message"]
+        if "audience" in data:
+            announcement.audience = data["audience"]
+        if "class_id" in data and data["audience"] == "CLASS":
+            try:
+                announcement.school_class_id = data["class_id"]
+            except Exception:
+                return Response(
+                    {"detail": "Invalid class ID."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        
+        announcement.save()
+        return Response(AnnouncementSerializer(announcement).data)
+
+    def delete(self, request, pk):
+        announcement = self.get_announcement(pk)
+        announcement.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 class AnnouncementCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
