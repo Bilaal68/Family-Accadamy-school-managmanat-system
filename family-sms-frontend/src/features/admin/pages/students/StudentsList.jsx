@@ -168,18 +168,19 @@ export default function StudentsList() {
           !studentsQ.isError &&
           studentsQ.data?.results.length > 0 && (
             <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-14">Photo</TableHead>
-                    <TableHead>Student ID</TableHead>
-                    <TableHead>Full Name</TableHead>
-                    <TableHead>Class</TableHead>
-                    <TableHead>Enrolled Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-14">Photo</TableHead>
+                      <TableHead>Student ID</TableHead>
+                      <TableHead>Full Name</TableHead>
+                      <TableHead className="hidden md:table-cell">Class</TableHead>
+                      <TableHead className="hidden lg:table-cell">Enrolled Date</TableHead>
+                      <TableHead className="hidden sm:table-cell">Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
                 <TableBody>
                   {studentsQ.data.results.map((student) => (
                     <TableRow key={student.id}>
@@ -190,21 +191,21 @@ export default function StudentsList() {
                           className="h-9 w-9"
                         />
                       </TableCell>
-                      <TableCell className="font-mono text-sm">{student.student_id}</TableCell>
-                      <TableCell className="font-medium">{student.full_name}</TableCell>
-                      <TableCell>{student.class_name}</TableCell>
-                      <TableCell>
+                      <TableCell className="font-mono text-xs sm:text-sm">{student.student_id}</TableCell>
+                      <TableCell className="font-medium text-sm">{student.full_name}</TableCell>
+                      <TableCell className="hidden md:table-cell text-sm">{student.class_name}</TableCell>
+                      <TableCell className="hidden lg:table-cell text-sm">
                         {student.enrolled_at
                           ? format(parseISO(student.enrolled_at), "MMM d, yyyy")
                           : "—"}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden sm:table-cell">
                         <Badge
                           variant={student.is_active ? "success" : "secondary"}
                           className={
                             student.is_active
-                              ? "bg-green-100 text-green-800"
-                              : "bg-neutral-200 text-neutral-700"
+                              ? "bg-green-100 text-green-800 text-xs"
+                              : "bg-neutral-200 text-neutral-700 text-xs"
                           }
                         >
                           {student.is_active ? "Active" : "Inactive"}
@@ -212,14 +213,21 @@ export default function StudentsList() {
                       </TableCell>
                       <TableCell>
                         <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="icon" asChild title="View">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 sm:size-auto sm:px-3"
+                            asChild
+                            title="View"
+                          >
                             <Link to={`/admin/students/${student.id}`}>
                               <Eye className="h-4 w-4" />
                             </Link>
                           </Button>
                           <Button
                             variant="ghost"
-                            size="icon"
+                            size="sm"
+                            className="h-8 w-8 p-0 sm:size-auto sm:px-3"
                             title="Edit"
                             onClick={() => setEditStudent(student)}
                           >
@@ -227,9 +235,9 @@ export default function StudentsList() {
                           </Button>
                           <Button
                             variant="ghost"
-                            size="icon"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-red-600 hover:bg-red-50 hover:text-red-700 sm:size-auto sm:px-3"
                             title="Delete"
-                            className="text-red-600 hover:bg-red-50 hover:text-red-700"
                             onClick={() => setDeleteStudentTarget(student)}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -240,8 +248,9 @@ export default function StudentsList() {
                   ))}
                 </TableBody>
               </Table>
-              <div className="flex items-center justify-between border-t border-[#E5E5E5] px-4 py-3">
-                <p className="text-sm text-neutral-600">
+              </div>
+              <div className="flex flex-col gap-3 border-t border-[#E5E5E5] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-xs sm:text-sm text-neutral-600">
                   Page {page} of {totalPages} · {studentsQ.data.count} students
                 </p>
                 <div className="flex gap-2">
@@ -250,6 +259,7 @@ export default function StudentsList() {
                     size="sm"
                     disabled={page <= 1}
                     onClick={() => setPage((p) => p - 1)}
+                    className="text-xs sm:text-sm"
                   >
                     Previous
                   </Button>
@@ -258,6 +268,7 @@ export default function StudentsList() {
                     size="sm"
                     disabled={page >= totalPages}
                     onClick={() => setPage((p) => p + 1)}
+                    className="text-xs sm:text-sm"
                   >
                     Next
                   </Button>

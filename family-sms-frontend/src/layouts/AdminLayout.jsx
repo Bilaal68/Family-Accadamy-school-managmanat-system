@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 
 import AdminSidebar from "@/components/layout/AdminSidebar";
@@ -23,6 +23,7 @@ export default function AdminLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const pendingQ = usePendingApprovalsCount();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const navItems = useMemo(
     () =>
@@ -41,12 +42,28 @@ export default function AdminLayout() {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <AdminSidebar items={navItems} user={user} onLogout={handleLogout} />
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Sidebar */}
+      <div
+        className={`fixed inset-y-0 left-0 z-50 w-60 transform transition-transform duration-300 md:relative md:translate-x-0 md:flex-shrink-0 ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <AdminSidebar items={navItems} user={user} onLogout={handleLogout} />
+      </div>
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <AdminTopbar user={user} />
+        <AdminTopbar user={user} onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
 
-        <main className="flex-1 overflow-y-auto bg-page p-8">
+        <main className="flex-1 overflow-y-auto bg-page p-4 md:p-8">
           <Outlet />
         </main>
       </div>

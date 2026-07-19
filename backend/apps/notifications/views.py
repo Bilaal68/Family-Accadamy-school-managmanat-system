@@ -84,20 +84,40 @@ class NotificationMarkAllReadView(APIView):
 
 
 class AnnouncementListView(APIView):
-    permission_classes = [IsAuthenticated, IsAdmin]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        queryset = Announcement.objects.select_related(
-            "school_class", "sent_by"
-        ).order_by("-created_at")[:100]
+        # Admin can see all announcements
+        if request.user.role == CustomUser.Role.SUPER_ADMIN:
+            queryset = Announcement.objects.select_related(
+                "school_class", "sent_by"
+            ).order_by("-created_at")[:100]
+        else:
+            # Non-admin users can only see announcements they created
+            queryset = Announcement.objects.filter(
+                sent_by=request.user
+            ).select_related(
+                "school_class", "sent_by"
+            ).order_by("-created_at")[:100]
+        
         return Response(AnnouncementSerializer(queryset, many=True).data)
 
 
 class AnnouncementDetailView(APIView):
-    permission_classes = [IsAuthenticated, IsAdmin]
+    permission_classes = [IsAuthenticated]
 
     def get_announcement(self, pk):
         return get_object_or_404(Announcement, pk=pk)
+
+    def _can_modify(self, request, announcement):
+        """Check if user can modify this announcement"""
+        # Admin can modify any announcement
+        if request.user.role == CustomUser.Role.SUPER_ADMIN:
+            return True
+        # Creator can modify their own announcement
+        if announcement.sent_by_id == request.user.id:
+            return True
+        return False
 
     def get(self, request, pk):
         announcement = self.get_announcement(pk)
@@ -105,6 +125,14 @@ class AnnouncementDetailView(APIView):
 
     def put(self, request, pk):
         announcement = self.get_announcement(pk)
+        
+        # Check permissions
+        if not self._can_modify(request, announcement):
+            return Response(
+                {"detail": "You don't have permission to edit this announcement."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        
         data = request.data
         
         # Update fields
@@ -128,6 +156,14 @@ class AnnouncementDetailView(APIView):
 
     def delete(self, request, pk):
         announcement = self.get_announcement(pk)
+        
+        # Check permissions
+        if not self._can_modify(request, announcement):
+            return Response(
+                {"detail": "You don't have permission to delete this announcement."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        
         announcement.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 

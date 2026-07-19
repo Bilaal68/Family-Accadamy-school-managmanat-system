@@ -64,13 +64,13 @@ function pctPresentToday(records) {
 function MetricCard({ icon: Icon, value, label }) {
   return (
     <div className="group relative overflow-hidden rounded-lg border border-brand bg-card shadow-card transition-shadow duration-200 hover:shadow-card-hover">
-      <div className="flex items-center gap-4 p-6">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-          <Icon className="h-6 w-6" strokeWidth={1.75} />
+      <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-4 sm:p-6">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground sm:h-12 sm:w-12">
+          <Icon className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={1.75} />
         </div>
-        <div>
-          <p className="text-2xl font-bold tabular-nums text-heading">{value}</p>
-          <p className="text-sm text-subtext">{label}</p>
+        <div className="min-w-0">
+          <p className="text-xl sm:text-2xl font-bold tabular-nums text-heading">{value}</p>
+          <p className="text-xs sm:text-sm text-subtext">{label}</p>
         </div>
       </div>
       <div className="h-[3px] w-full bg-accent" />
@@ -255,7 +255,7 @@ export default function Dashboard() {
           />
         )}
         {!metricsLoading && !metricsError && (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-4 grid-cols-2 md:grid-cols-4 lg:grid-cols-5">
             <MetricCard icon={Users} value={studentsQ.data ?? 0} label="Total students" />
             <MetricCard
               icon={GraduationCap}
@@ -354,12 +354,12 @@ export default function Dashboard() {
                   {pendingQ.data.map((row) => (
                     <li
                       key={`${row.kind}-${row.id}`}
-                      className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between"
+                      className="flex flex-col gap-2 py-4 sm:flex-row sm:items-center sm:justify-between"
                     >
-                      <div className="flex gap-3 border-l-[3px] border-accent pl-3">
-                        <div>
-                          <p className="font-semibold text-heading">{row.className}</p>
-                          <p className="text-sm text-subtext">{row.teacherName}</p>
+                      <div className="flex gap-2 sm:gap-3 border-l-[3px] border-accent pl-2 sm:pl-3">
+                        <div className="min-w-0">
+                          <p className="text-sm sm:text-base font-semibold text-heading">{row.className}</p>
+                          <p className="text-xs sm:text-sm text-subtext">{row.teacherName}</p>
                           <div className="mt-2 flex flex-wrap items-center gap-2">
                             <Badge
                               variant={row.kind === "marks" ? "marks" : "attendance"}
@@ -378,7 +378,7 @@ export default function Dashboard() {
                       </div>
                       <Button
                         size="sm"
-                        className="bg-primary hover:bg-accent hover:text-accent-foreground"
+                        className="w-full sm:w-auto bg-primary hover:bg-accent hover:text-accent-foreground min-h-10"
                         disabled={
                           approveMarkMut.isPending || approveAttMut.isPending
                         }
@@ -413,9 +413,9 @@ export default function Dashboard() {
             <CardHeader>
               <CardTitle>Class attendance (today)</CardTitle>
             </CardHeader>
-            <CardContent className="h-80">
+            <CardContent className="h-48 md:h-80">
               {chartData.length === 0 ? (
-                <p className="flex h-full items-center justify-center text-sm text-muted-label">
+                <p className="flex h-full items-center justify-center text-xs sm:text-sm text-muted-label">
                   No classes yet
                 </p>
               ) : (
@@ -423,7 +423,7 @@ export default function Dashboard() {
                   <BarChart
                     layout="vertical"
                     data={chartData}
-                    margin={{ top: 8, right: 24, left: 8, bottom: 8 }}
+                    margin={{ top: 4, right: 12, left: 4, bottom: 4 }}
                   >
                     <defs>
                       <linearGradient id="attendanceBarGrad" x1="0" y1="0" x2="1" y2="0">
@@ -434,15 +434,15 @@ export default function Dashboard() {
                     <XAxis
                       type="number"
                       domain={[0, 100]}
-                      tick={{ fill: theme.textSecondary, fontSize: 12 }}
+                      tick={{ fill: theme.textSecondary, fontSize: 10 }}
                       axisLine={{ stroke: theme.primary }}
                       tickLine={false}
                     />
                     <YAxis
                       type="category"
                       dataKey="name"
-                      width={120}
-                      tick={{ fill: theme.textPrimary, fontSize: 12 }}
+                      width={80}
+                      tick={{ fill: theme.textPrimary, fontSize: 10 }}
                       axisLine={{ stroke: theme.primary }}
                       tickLine={false}
                     />
@@ -529,10 +529,10 @@ export default function Dashboard() {
 
       {/* Quick actions */}
       <section>
-        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-subtext">
+        <h2 className="mb-4 text-xs sm:text-sm font-semibold uppercase tracking-wide text-subtext">
           Quick actions
         </h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           <QuickAction
             icon={GraduationCap}
             label="Register teacher"
@@ -565,13 +565,13 @@ function QuickAction({ icon: Icon, label, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="group flex flex-col items-center justify-center gap-3 rounded-lg border border-primary bg-card px-4 py-6 text-center shadow-card transition-all duration-200 hover:bg-primary hover:shadow-card-hover"
+      className="group flex flex-col items-center justify-center gap-2 sm:gap-3 rounded-lg border border-primary bg-card px-3 py-4 sm:px-4 sm:py-6 text-center shadow-card transition-all duration-200 hover:bg-primary hover:shadow-card-hover min-h-[100px] sm:min-h-[120px]"
     >
       <Icon
-        className="h-6 w-6 text-heading transition-colors group-hover:text-accent"
+        className="h-5 w-5 sm:h-6 sm:w-6 text-heading transition-colors group-hover:text-accent"
         strokeWidth={1.75}
       />
-      <span className="text-sm font-medium text-heading transition-colors group-hover:text-primary-foreground">
+      <span className="text-xs sm:text-sm font-medium text-heading transition-colors group-hover:text-primary-foreground line-clamp-2">
         {label}
       </span>
     </button>

@@ -548,26 +548,26 @@ export default function EnrollmentForm() {
 
       {/* Branded Header */}
 
-      <div className="bg-[#10026B] py-4 px-6">
+      <div className="bg-[#10026B] py-3 sm:py-4 px-4 sm:px-6">
 
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
+        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
 
-          <Link to="/" className="flex items-center gap-2 text-white font-bold text-lg">
+          <Link to="/" className="flex items-center gap-2 text-white font-bold text-base sm:text-lg">
 
             <img
               src="/logo.PNG"
               alt="Family Academy"
-              className="w-9 h-9 object-contain"
+              className="w-8 h-8 sm:w-9 sm:h-9 object-contain"
             />
 
             <div>
-              <p className="text-white font-bold text-sm leading-tight">Family Academy</p>
+              <p className="text-white font-bold text-xs sm:text-sm leading-tight">Family Academy</p>
               <p className="text-[#C2B30C] text-xs leading-tight">Akkadaamii Faamilii</p>
             </div>
 
           </Link>
 
-          <Link to="/" className="text-white/70 hover:text-white text-sm transition-colors">
+          <Link to="/" className="text-white/70 hover:text-white text-xs sm:text-sm transition-colors">
 
             ← Back to Home
 
@@ -583,19 +583,19 @@ export default function EnrollmentForm() {
 
       <div className="min-h-screen bg-gradient-to-b from-[#F4F3FF] to-white">
 
-        <div className="mx-auto max-w-3xl px-6 py-12">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6 py-8 sm:py-12">
 
           {/* Page Header */}
 
-          <div className="text-center mb-8">
+          <div className="text-center mb-6 sm:mb-8">
 
-            <h1 className="text-3xl font-bold text-[#10026B] mb-2">Apply to Family Academy</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-[#10026B] mb-2">Apply to Family Academy</h1>
 
-            <p className="text-gray-500">Fill in your child's details below to begin the enrollment process.</p>
+            <p className="text-gray-500 text-sm sm:text-base">Fill in your child's details below to begin the enrollment process.</p>
 
             {typeChosen && currentStep > 0 && (
 
-              <span className="inline-flex mt-3 rounded-full bg-[#C2B30C]/10 border border-[#C2B30C]/30 px-4 py-1.5 text-sm font-medium text-[#10026B]">
+              <span className="inline-flex mt-3 rounded-full bg-[#C2B30C]/10 border border-[#C2B30C]/30 px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium text-[#10026B]">
 
                 {studentTypeLabel}
 
@@ -609,17 +609,19 @@ export default function EnrollmentForm() {
 
           {/* Main Form Card */}
 
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 md:p-10">
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-4 sm:p-6 md:p-10">
 
             {/* Step Indicator */}
 
-            <div className="mb-8">
+            <div className="mb-6 sm:mb-8">
 
               <StepIndicator currentStep={currentStep} />
 
-              <p className="mt-4 text-center text-sm font-medium text-[#10026B]">
+              <p className="mt-4 text-center text-xs sm:text-sm font-medium text-[#10026B]">
 
-                {ENROLLMENT_STEPS[currentStep].title}
+                {/* Mobile: "Step X of 6", Desktop: Full title */}
+                <span className="sm:hidden">Step {currentStep + 1} of {ENROLLMENT_STEPS.length}</span>
+                <span className="hidden sm:inline">{ENROLLMENT_STEPS[currentStep].title}</span>
 
               </p>
 
@@ -639,7 +641,7 @@ export default function EnrollmentForm() {
 
             >
 
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
 
                 <button
 
@@ -647,21 +649,21 @@ export default function EnrollmentForm() {
 
                   onClick={() => selectApplicationType(false)}
 
-                  className="flex flex-col items-center gap-3 rounded-xl border-2 border-[#E8E6FF] bg-[#fafaff] p-6 text-left transition hover:border-[#10026B] hover:shadow-md"
+                  className="flex flex-col items-center gap-2 sm:gap-3 rounded-xl border-2 border-[#E8E6FF] bg-[#fafaff] p-4 sm:p-6 text-left transition hover:border-[#10026B] hover:shadow-md min-h-40 sm:min-h-44"
 
                 >
 
-                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#10026B]/10">
+                  <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-[#10026B]/10">
 
-                    <GraduationCap className="h-7 w-7 text-[#10026B]" />
+                    <GraduationCap className="h-6 w-6 sm:h-7 sm:w-7 text-[#10026B]" />
 
                   </div>
 
                   <div className="text-center">
 
-                    <h3 className="font-semibold text-[#10026B]">New Student</h3>
+                    <h3 className="font-semibold text-[#10026B] text-sm sm:text-base">New Student</h3>
 
-                    <p className="mt-1 text-sm text-[#6b63a3]">
+                    <p className="mt-1 text-xs sm:text-sm text-[#6b63a3]">
 
                       First-time enrollment. Requires student photo and birth certificate.
 
@@ -677,23 +679,23 @@ export default function EnrollmentForm() {
 
                   onClick={() => selectApplicationType(true)}
 
-                  className="flex flex-col items-center gap-3 rounded-xl border-2 border-[#E8E6FF] bg-[#fafaff] p-6 text-left transition hover:border-[#C2B30C] hover:shadow-md"
+                  className="flex flex-col items-center gap-2 sm:gap-3 rounded-xl border-2 border-[#E8E6FF] bg-[#fafaff] p-4 sm:p-6 text-left transition hover:border-[#C2B30C] hover:shadow-md min-h-40 sm:min-h-44"
 
                 >
 
-                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#C2B30C]/20">
+                  <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-[#C2B30C]/20">
 
-                    <School className="h-7 w-7 text-[#10026B]" />
+                    <School className="h-6 w-6 sm:h-7 sm:w-7 text-[#10026B]" />
 
                   </div>
 
                   <div className="text-center">
 
-                    <h3 className="font-semibold text-[#10026B]">Transfer Student</h3>
+                    <h3 className="font-semibold text-[#10026B] text-sm sm:text-base">Transfer Student</h3>
 
-                    <p className="mt-1 text-sm text-[#6b63a3]">
+                    <p className="mt-1 text-xs sm:text-sm text-[#6b63a3]">
 
-                      Transferring from another school. Requires report card and transfer letter in addition to birth certificate.
+                      Transferring from another school. Requires report card and transfer letter.
 
                     </p>
 
@@ -1303,35 +1305,35 @@ export default function EnrollmentForm() {
 
 
 
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
 
-                  <div className="bg-white rounded-lg p-4 border border-gray-100">
+                  <div className="bg-white rounded-lg p-3 sm:p-4 border border-gray-100">
 
                     <p className="text-xs text-gray-400 mb-1">Bank Name</p>
 
                     {/* Bank Name: Commercial Bank of Ethiopia (change if different bank) */}
 
-                    <p className="font-semibold text-[#10026B]">Commercial Bank of Ethiopia</p>
+                    <p className="font-semibold text-[#10026B] text-sm">Commercial Bank of Ethiopia</p>
 
                   </div>
 
-                  <div className="bg-white rounded-lg p-4 border border-gray-100">
+                  <div className="bg-white rounded-lg p-3 sm:p-4 border border-gray-100">
 
                     <p className="text-xs text-gray-400 mb-1">Account Name</p>
 
-                    <p className="font-semibold text-[#10026B]">Family Academy</p>
+                    <p className="font-semibold text-[#10026B] text-sm">Family Academy</p>
 
                   </div>
 
-                  <div className="bg-white rounded-lg p-4 border border-gray-100">
+                  <div className="bg-white rounded-lg p-3 sm:p-4 border border-gray-100">
 
                     <p className="text-xs text-gray-400 mb-1">Account Number</p>
 
                     {/* Account Number: [get from school admin] */}
 
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-2">
 
-                      <p className="font-semibold text-[#10026B] tracking-widest">
+                      <p className="font-semibold text-[#10026B] tracking-widest text-sm break-all">
 
                         1000123456789
 
@@ -1349,7 +1351,7 @@ export default function EnrollmentForm() {
 
                         }}
 
-                        className="text-[#C2B30C] hover:text-[#9e920a] transition-colors"
+                        className="text-[#C2B30C] hover:text-[#9e920a] transition-colors flex-shrink-0"
 
                       >
 
@@ -1361,13 +1363,13 @@ export default function EnrollmentForm() {
 
                   </div>
 
-                  <div className="bg-white rounded-lg p-4 border border-gray-100">
+                  <div className="bg-white rounded-lg p-3 sm:p-4 border border-gray-100">
 
                     <p className="text-xs text-gray-400 mb-1">Registration Fee</p>
 
                     {/* Registration Fee Amount: [get from school admin] */}
 
-                    <p className="font-semibold text-[#10026B]">ETB 1,500</p>
+                    <p className="font-semibold text-[#10026B] text-sm">ETB 1,500</p>
 
                   </div>
 
@@ -1651,7 +1653,7 @@ export default function EnrollmentForm() {
 
         {currentStep > 0 && (
 
-          <div className="mt-8 flex flex-col-reverse gap-3 border-t border-gray-100 pt-6 sm:flex-row sm:justify-between">
+          <div className="mt-6 sm:mt-8 flex flex-col-reverse gap-2 sm:gap-3 border-t border-gray-100 pt-4 sm:pt-6 sm:flex-row sm:justify-between">
 
             <Button
 
@@ -1661,11 +1663,11 @@ export default function EnrollmentForm() {
 
               disabled={currentStep === 0}
 
-              className="w-full sm:w-auto border-2 border-gray-200 text-gray-600 font-semibold px-8 py-3 rounded-xl hover:border-gray-300 hover:bg-gray-50 transition-all"
+              className="w-full sm:w-auto border-2 border-gray-200 text-gray-600 font-semibold px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl hover:border-gray-300 hover:bg-gray-50 transition-all text-sm sm:text-base min-h-11"
 
             >
 
-              <ArrowLeft className="mr-2 h-4 w-4" />
+              <ArrowLeft className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
 
               Previous
 
@@ -1677,13 +1679,13 @@ export default function EnrollmentForm() {
 
                 onClick={handleNext}
 
-                className="w-full sm:w-auto bg-[#10026B] text-white font-semibold px-8 py-3 rounded-xl hover:bg-[#1a0494] transition-all hover:shadow-lg disabled:opacity-40 disabled:cursor-not-allowed"
+                className="w-full sm:w-auto bg-[#10026B] text-white font-semibold px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl hover:bg-[#1a0494] transition-all hover:shadow-lg disabled:opacity-40 disabled:cursor-not-allowed text-sm sm:text-base min-h-11"
 
               >
 
                 Continue
 
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <ArrowRight className="ml-2 h-3 w-3 sm:h-4 sm:w-4" />
 
               </Button>
 
@@ -1695,7 +1697,7 @@ export default function EnrollmentForm() {
 
                 disabled={submitMut.isPending}
 
-                className="w-full sm:w-auto bg-gradient-to-r from-[#C2B30C] to-[#d4c40e] text-[#10026B] font-bold px-8 py-3 rounded-xl hover:shadow-lg transition-all hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="w-full sm:w-auto bg-gradient-to-r from-[#C2B30C] to-[#d4c40e] text-[#10026B] font-bold px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl hover:shadow-lg transition-all hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed text-sm sm:text-base min-h-11"
 
               >
 

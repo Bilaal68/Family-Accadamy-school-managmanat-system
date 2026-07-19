@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+import { Menu, X } from "lucide-react";
 
 // Social Icons Component
 function SocialIcons() {
@@ -83,6 +84,7 @@ function useActiveSection(sectionIds) {
 
 export default function PublicLayout({ children }) {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const activeSection = useActiveSection(["home", "why-us", "grades", "how-to-apply", "location", "contact"]);
@@ -97,6 +99,9 @@ export default function PublicLayout({ children }) {
   }, []);
 
   const scrollToSection = (id) => {
+    // Close mobile menu when clicking a link
+    setIsMobileMenuOpen(false);
+    
     // If not on home page, navigate there first, then scroll
     if (location.pathname !== "/") {
       navigate("/");
@@ -134,173 +139,273 @@ export default function PublicLayout({ children }) {
             : "bg-[#10026B]/60 backdrop-blur-md border-b border-white/5"
         }`}
       >
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
           <motion.button
             onClick={() => scrollToSection("home")}
-            className="flex items-center gap-3 cursor-pointer group"
+            className="flex items-center gap-2 sm:gap-3 cursor-pointer group flex-shrink-0"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
             <motion.div
               whileHover={{ rotate: 360, scale: 1.1 }}
               transition={{ duration: 0.8, ease: "easeInOut" }}
-              className="relative flex h-12 w-12 items-center justify-center rounded-lg overflow-hidden shadow-lg group-hover:shadow-[#C2B30C]/50 transition-shadow duration-300"
+              className="relative flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-lg overflow-hidden shadow-lg group-hover:shadow-[#C2B30C]/50 transition-shadow duration-300"
             >
               <img
                 src="/logo.PNG"
                 alt="Family Academy Logo"
-                className="w-12 h-12 object-contain"
+                className="w-full h-full object-contain"
               />
             </motion.div>
-            <div>
-              <span className="text-xl font-bold text-white tracking-tight group-hover:text-[#C2B30C] transition-colors duration-300">
+            <div className="hidden sm:block">
+              <span className="text-lg sm:text-xl font-bold text-white tracking-tight group-hover:text-[#C2B30C] transition-colors duration-300">
                 Family Academy
               </span>
               <p className="text-xs text-[#C2B30C] font-medium hidden sm:block">Akkadaamii Faamilii</p>
             </div>
           </motion.button>
           
-          <nav className="flex items-center gap-2 lg:gap-8">
-            {isHomePage ? (
-              <>
-                {/* Scroll navigation for home page */}
-                <motion.div 
-                  whileHover={{ y: -2 }} 
-                  whileTap={{ scale: 0.95 }}
-                  className="hidden md:block"
-                >
+          <nav className="flex items-center gap-2 sm:gap-4">
+            {/* Desktop Navigation - Hidden on mobile */}
+            <div className="hidden md:flex items-center gap-2 lg:gap-8">
+              {isHomePage ? (
+                <>
+                  {/* Scroll navigation for home page */}
+                  <motion.div 
+                    whileHover={{ y: -2 }} 
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <button
+                      onClick={() => scrollToSection("why-us")}
+                      className={`group relative text-sm font-semibold px-3 py-2 rounded-lg transition-all duration-300 ${
+                        activeSection === "why-us" 
+                          ? "text-[#C2B30C] bg-[#C2B30C]/10" 
+                          : "text-white/80 hover:text-white hover:bg-white/5"
+                      }`}
+                    >
+                      Why Us
+                      <span
+                        className={`absolute -bottom-0.5 left-3 right-3 h-0.5 bg-gradient-to-r from-[#C2B30C] to-[#d4c40e] rounded-full transition-all duration-300 ${
+                          activeSection === "why-us" ? "opacity-100" : "opacity-0 group-hover:opacity-50"
+                        }`}
+                      />
+                    </button>
+                  </motion.div>
+                  <motion.div 
+                    whileHover={{ y: -2 }} 
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <button
+                      onClick={() => scrollToSection("grades")}
+                      className={`group relative text-sm font-semibold px-3 py-2 rounded-lg transition-all duration-300 ${
+                        activeSection === "grades" 
+                          ? "text-[#C2B30C] bg-[#C2B30C]/10" 
+                          : "text-white/80 hover:text-white hover:bg-white/5"
+                      }`}
+                    >
+                      Grades
+                      <span
+                        className={`absolute -bottom-0.5 left-3 right-3 h-0.5 bg-gradient-to-r from-[#C2B30C] to-[#d4c40e] rounded-full transition-all duration-300 ${
+                          activeSection === "grades" ? "opacity-100" : "opacity-0 group-hover:opacity-50"
+                        }`}
+                      />
+                    </button>
+                  </motion.div>
+                  <motion.div 
+                    whileHover={{ y: -2 }} 
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <button
+                      onClick={() => scrollToSection("location")}
+                      className={`group relative text-sm font-semibold px-3 py-2 rounded-lg transition-all duration-300 ${
+                        activeSection === "location" 
+                          ? "text-[#C2B30C] bg-[#C2B30C]/10" 
+                          : "text-white/80 hover:text-white hover:bg-white/5"
+                      }`}
+                    >
+                      Location
+                      <span
+                        className={`absolute -bottom-0.5 left-3 right-3 h-0.5 bg-gradient-to-r from-[#C2B30C] to-[#d4c40e] rounded-full transition-all duration-300 ${
+                          activeSection === "location" ? "opacity-100" : "opacity-0 group-hover:opacity-50"
+                        }`}
+                      />
+                    </button>
+                  </motion.div>
+                  <motion.div 
+                    whileHover={{ y: -2 }} 
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <button
+                      onClick={() => scrollToSection("contact")}
+                      className={`group relative text-sm font-semibold px-3 py-2 rounded-lg transition-all duration-300 ${
+                        activeSection === "contact" 
+                          ? "text-[#C2B30C] bg-[#C2B30C]/10" 
+                          : "text-white/80 hover:text-white hover:bg-white/5"
+                      }`}
+                    >
+                      Contact
+                      <span
+                        className={`absolute -bottom-0.5 left-3 right-3 h-0.5 bg-gradient-to-r from-[#C2B30C] to-[#d4c40e] rounded-full transition-all duration-300 ${
+                          activeSection === "contact" ? "opacity-100" : "opacity-0 group-hover:opacity-50"
+                        }`}
+                      />
+                    </button>
+                  </motion.div>
+                </>
+              ) : (
+                <>
+                  {/* Route navigation for other pages */}
+                  <motion.div 
+                    whileHover={{ y: -2 }} 
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <button
+                      onClick={() => scrollToSection("home")}
+                      className="group relative text-sm font-semibold px-3 py-2 rounded-lg text-white/80 hover:text-white hover:bg-white/5 transition-all duration-300"
+                    >
+                      Home
+                      <span className="absolute -bottom-0.5 left-3 right-3 h-0.5 bg-gradient-to-r from-[#C2B30C] to-[#d4c40e] rounded-full opacity-0 group-hover:opacity-50 transition-all duration-300" />
+                    </button>
+                  </motion.div>
+                  <motion.div 
+                    whileHover={{ y: -2 }} 
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Link
+                      to="/enroll/status"
+                      className={`group relative text-sm font-semibold px-3 py-2 rounded-lg transition-all duration-300 ${
+                        location.pathname === "/enroll/status" 
+                          ? "text-[#C2B30C] bg-[#C2B30C]/10" 
+                          : "text-white/80 hover:text-white hover:bg-white/5"
+                      }`}
+                    >
+                      Check Status
+                      <span
+                        className={`absolute -bottom-0.5 left-3 right-3 h-0.5 bg-gradient-to-r from-[#C2B30C] to-[#d4c40e] rounded-full transition-all duration-300 ${
+                          location.pathname === "/enroll/status" ? "opacity-100" : "opacity-0 group-hover:opacity-50"
+                        }`}
+                      />
+                    </Link>
+                  </motion.div>
+                </>
+              )}
+            </div>
+            
+            {/* Apply Now Button - Desktop */}
+            <motion.div 
+              whileHover={{ scale: 1.05, y: -2 }} 
+              whileTap={{ scale: 0.95 }}
+              className="hidden sm:block"
+            >
+              <Link
+                to="/enroll"
+                className="relative overflow-hidden rounded-xl bg-gradient-to-r from-[#C2B30C] to-[#d4c40e] px-4 sm:px-6 py-2.5 text-xs sm:text-sm font-bold text-[#10026B] shadow-lg shadow-[#C2B30C]/30 transition-all duration-300 hover:shadow-xl hover:shadow-[#C2B30C]/50 group"
+              >
+                <span className="relative z-10">Apply Now</span>
+                <div className="absolute inset-0 bg-gradient-to-r from-[#d4c40e] to-[#C2B30C] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </Link>
+            </motion.div>
+
+            {/* Mobile Hamburger Menu - Shown on mobile only */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden flex-shrink-0 inline-flex items-center justify-center w-10 h-10 rounded-lg text-white hover:bg-white/10 transition-colors"
+              aria-label="Toggle menu"
+            >
+              {isMobileMenuOpen ? (
+                <X className="w-6 h-6" />
+              ) : (
+                <Menu className="w-6 h-6" />
+              )}
+            </button>
+          </nav>
+
+          {/* Mobile Menu - Full-width dropdown */}
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ 
+              opacity: isMobileMenuOpen ? 1 : 0, 
+              height: isMobileMenuOpen ? "auto" : 0,
+              transition: { duration: 0.2 }
+            }}
+            className="md:hidden absolute top-full left-0 right-0 bg-[#0D0144]/95 backdrop-blur-xl border-b border-white/10 overflow-hidden"
+          >
+            <div className="px-4 py-4 space-y-2">
+              {isHomePage ? (
+                <>
                   <button
                     onClick={() => scrollToSection("why-us")}
-                    className={`group relative text-sm font-semibold px-3 py-2 rounded-lg transition-all duration-300 ${
+                    className={`block w-full text-left px-4 py-3 rounded-lg font-semibold text-base min-h-12 transition-all duration-300 ${
                       activeSection === "why-us" 
                         ? "text-[#C2B30C] bg-[#C2B30C]/10" 
                         : "text-white/80 hover:text-white hover:bg-white/5"
                     }`}
                   >
                     Why Us
-                    <span
-                      className={`absolute -bottom-0.5 left-3 right-3 h-0.5 bg-gradient-to-r from-[#C2B30C] to-[#d4c40e] rounded-full transition-all duration-300 ${
-                        activeSection === "why-us" ? "opacity-100" : "opacity-0 group-hover:opacity-50"
-                      }`}
-                    />
                   </button>
-                </motion.div>
-                <motion.div 
-                  whileHover={{ y: -2 }} 
-                  whileTap={{ scale: 0.95 }}
-                  className="hidden md:block"
-                >
                   <button
                     onClick={() => scrollToSection("grades")}
-                    className={`group relative text-sm font-semibold px-3 py-2 rounded-lg transition-all duration-300 ${
+                    className={`block w-full text-left px-4 py-3 rounded-lg font-semibold text-base min-h-12 transition-all duration-300 ${
                       activeSection === "grades" 
                         ? "text-[#C2B30C] bg-[#C2B30C]/10" 
                         : "text-white/80 hover:text-white hover:bg-white/5"
                     }`}
                   >
                     Grades
-                    <span
-                      className={`absolute -bottom-0.5 left-3 right-3 h-0.5 bg-gradient-to-r from-[#C2B30C] to-[#d4c40e] rounded-full transition-all duration-300 ${
-                        activeSection === "grades" ? "opacity-100" : "opacity-0 group-hover:opacity-50"
-                      }`}
-                    />
                   </button>
-                </motion.div>
-                <motion.div 
-                  whileHover={{ y: -2 }} 
-                  whileTap={{ scale: 0.95 }}
-                  className="hidden md:block"
-                >
                   <button
                     onClick={() => scrollToSection("location")}
-                    className={`group relative text-sm font-semibold px-3 py-2 rounded-lg transition-all duration-300 ${
+                    className={`block w-full text-left px-4 py-3 rounded-lg font-semibold text-base min-h-12 transition-all duration-300 ${
                       activeSection === "location" 
                         ? "text-[#C2B30C] bg-[#C2B30C]/10" 
                         : "text-white/80 hover:text-white hover:bg-white/5"
                     }`}
                   >
                     Location
-                    <span
-                      className={`absolute -bottom-0.5 left-3 right-3 h-0.5 bg-gradient-to-r from-[#C2B30C] to-[#d4c40e] rounded-full transition-all duration-300 ${
-                        activeSection === "location" ? "opacity-100" : "opacity-0 group-hover:opacity-50"
-                      }`}
-                    />
                   </button>
-                </motion.div>
-                <motion.div 
-                  whileHover={{ y: -2 }} 
-                  whileTap={{ scale: 0.95 }}
-                  className="hidden md:block"
-                >
                   <button
                     onClick={() => scrollToSection("contact")}
-                    className={`group relative text-sm font-semibold px-3 py-2 rounded-lg transition-all duration-300 ${
+                    className={`block w-full text-left px-4 py-3 rounded-lg font-semibold text-base min-h-12 transition-all duration-300 ${
                       activeSection === "contact" 
                         ? "text-[#C2B30C] bg-[#C2B30C]/10" 
                         : "text-white/80 hover:text-white hover:bg-white/5"
                     }`}
                   >
                     Contact
-                    <span
-                      className={`absolute -bottom-0.5 left-3 right-3 h-0.5 bg-gradient-to-r from-[#C2B30C] to-[#d4c40e] rounded-full transition-all duration-300 ${
-                        activeSection === "contact" ? "opacity-100" : "opacity-0 group-hover:opacity-50"
-                      }`}
-                    />
                   </button>
-                </motion.div>
-              </>
-            ) : (
-              <>
-                {/* Route navigation for other pages */}
-                <motion.div 
-                  whileHover={{ y: -2 }} 
-                  whileTap={{ scale: 0.95 }}
-                  className="hidden md:block"
-                >
+                </>
+              ) : (
+                <>
                   <button
                     onClick={() => scrollToSection("home")}
-                    className="group relative text-sm font-semibold px-3 py-2 rounded-lg text-white/80 hover:text-white hover:bg-white/5 transition-all duration-300"
+                    className="block w-full text-left px-4 py-3 rounded-lg font-semibold text-base min-h-12 text-white/80 hover:text-white hover:bg-white/5 transition-all duration-300"
                   >
                     Home
-                    <span className="absolute -bottom-0.5 left-3 right-3 h-0.5 bg-gradient-to-r from-[#C2B30C] to-[#d4c40e] rounded-full opacity-0 group-hover:opacity-50 transition-all duration-300" />
                   </button>
-                </motion.div>
-                <motion.div 
-                  whileHover={{ y: -2 }} 
-                  whileTap={{ scale: 0.95 }}
-                  className="hidden md:block"
-                >
                   <Link
                     to="/enroll/status"
-                    className={`group relative text-sm font-semibold px-3 py-2 rounded-lg transition-all duration-300 ${
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`block w-full text-left px-4 py-3 rounded-lg font-semibold text-base min-h-12 transition-all duration-300 ${
                       location.pathname === "/enroll/status" 
                         ? "text-[#C2B30C] bg-[#C2B30C]/10" 
                         : "text-white/80 hover:text-white hover:bg-white/5"
                     }`}
                   >
                     Check Status
-                    <span
-                      className={`absolute -bottom-0.5 left-3 right-3 h-0.5 bg-gradient-to-r from-[#C2B30C] to-[#d4c40e] rounded-full transition-all duration-300 ${
-                        location.pathname === "/enroll/status" ? "opacity-100" : "opacity-0 group-hover:opacity-50"
-                      }`}
-                    />
                   </Link>
-                </motion.div>
-              </>
-            )}
-            <motion.div 
-              whileHover={{ scale: 1.05, y: -2 }} 
-              whileTap={{ scale: 0.95 }}
-            >
+                </>
+              )}
+              
+              {/* Apply Now Button - Mobile */}
               <Link
                 to="/enroll"
-                className="relative overflow-hidden rounded-xl bg-gradient-to-r from-[#C2B30C] to-[#d4c40e] px-6 py-2.5 text-sm font-bold text-[#10026B] shadow-lg shadow-[#C2B30C]/30 transition-all duration-300 hover:shadow-xl hover:shadow-[#C2B30C]/50 group"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="block w-full text-center bg-[#C2B30C] text-[#10026B] font-bold py-3 rounded-lg hover:bg-[#d4c40e] transition-all min-h-12 flex items-center justify-center mt-4 text-base"
               >
-                <span className="relative z-10">Apply Now</span>
-                <div className="absolute inset-0 bg-gradient-to-r from-[#d4c40e] to-[#C2B30C] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                Apply Now
               </Link>
-            </motion.div>
-          </nav>
+            </div>
+          </motion.div>
         </div>
       </motion.header>
 
@@ -325,37 +430,39 @@ export default function PublicLayout({ children }) {
         <div className="absolute top-0 left-0 w-64 h-64 bg-[#C2B30C]/5 rounded-full blur-3xl pointer-events-none"></div>
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#10026B]/30 rounded-full blur-3xl pointer-events-none"></div>
         
-        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 relative z-10">
-          <div className="flex flex-col items-center gap-8">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-12 relative z-10">
+          <div className="flex flex-col items-center gap-6 sm:gap-8">
             {/* Top Row: School Name & Social Icons */}
-            <div className="flex flex-col items-center justify-between gap-6 w-full sm:flex-row">
-              <div className="flex items-center gap-4">
+            <div className="flex flex-col items-center justify-between gap-4 sm:gap-6 w-full sm:flex-row">
+              <div className="flex items-center gap-3 sm:gap-4">
                 <img
                   src="/logo.PNG"
                   alt="Family Academy Logo"
-                  className="w-14 h-14 object-contain"
+                  className="w-12 h-12 sm:w-14 sm:h-14 object-contain"
                 />
                 <div>
-                  <p className="text-2xl font-bold text-white">Family Academy</p>
-                  <p className="text-sm text-[#C2B30C]">Akkadaamii Faamilii</p>
+                  <p className="text-lg sm:text-2xl font-bold text-white">Family Academy</p>
+                  <p className="text-xs sm:text-sm text-[#C2B30C]">Akkadaamii Faamilii</p>
                 </div>
               </div>
-              <SocialIcons />
+              <div className="flex items-center justify-center w-full sm:w-auto sm:justify-end">
+                <SocialIcons />
+              </div>
             </div>
             
             {/* Divider */}
             <div className="w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
             
             {/* Bottom Row: Copyright & VRLX Credit */}
-            <div className="flex flex-col gap-4 w-full items-center justify-between md:flex-row">
-              <p className="text-sm text-white/40 text-center md:text-left">
+            <div className="flex flex-col gap-3 sm:gap-4 w-full items-center justify-between text-center sm:text-left sm:flex-row">
+              <p className="text-xs sm:text-sm text-white/40">
                 &copy; {new Date().getFullYear()} Family Academy — Akkadaamii Faamilii. All rights reserved.
               </p>
               <a
                 href="https://vrlx-digital.vercel.app/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-white/40 hover:text-[#C2B30C] transition-colors text-sm group"
+                className="flex items-center gap-2 text-white/40 hover:text-[#C2B30C] transition-colors text-xs sm:text-sm group"
               >
                 <span>Built by</span>
                 <span className="font-bold text-white/60 group-hover:text-[#C2B30C] transition-colors">
