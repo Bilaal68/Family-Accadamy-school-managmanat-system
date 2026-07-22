@@ -74,3 +74,46 @@ a.brand-link:hover {
   text-decoration: underline;
   text-decoration-color: #c2b30c;
 }
+
+
+/* Print styles for reports */
+@media print {
+  /* Hide everything except report content */
+  nav,
+  aside,
+  header,
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: white;
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  th,
+  td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    font-size: 12px;
+  }
+
+  thead {
+    background: #10026B !important;
+    color: white !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .no-print-hide {
+    display: block !important;
+  }
+
+  @page {
+    margin: 0.5in;
+  }
+}

@@ -345,3 +345,77 @@ class TeacherAttendanceTodaySummaryView(APIView):
             "present": present_count,
             "date": today
         })
+
+
+class AttendanceReportView(APIView):
+    """
+    Generate an attendance report with records, presence percentages, and status.
+    Supports filtering by class and month.
+    """
+    permission_classes = [IsAdmin]
+
+    def get(self, request):
+        try:
+            from apps.students.models import Student
+            
+            class_id = request.query_params.get('class')
+            month = request.query_params.get('month')
+            
+            # Filter attendance records
+            queryset = AttendanceRecord.objects.filter(approved_at__isnull=False)
+            if class_id:
+                queryset = queryset.filter(student__school_class_id=class_id)
+            if month:
+                queryset = queryset.filter(date__startswith=month)
+            
+            # Get students
+            if class_id:
+                students = Student.objects.filter(school_class_id=class_id, is_active=True)
+            else:
+                students = Student.objects.filter(is_active=True)
+            
+            data = []
+            for student in students:
+                student_records = queryset.filter(student=student)
+                total = student_records.count()
+                present = student_records.filter(status='PRESENT').count()
+                absent = student_records.filter(status='ABSENT').count()
+                late = student_records.filter(status='LATE').count()
+                
+                if total > 0:
+                    percentage = round((present / total) * 100, 1)
+                else:
+                    percentage = 0
+                
+                # Status: Good (80%+), Warning (60-79%), Critical (<60%)
+                if percentage >= 80:
+                    status_label = 'Good'
+                elif percentage >= 60:
+                    status_label = 'Warning'
+                else:
+                    status_label = 'Critical'
+                
+                data.append({
+                    'student_id': str(student.id),
+                    'student_name': student.full_name,
+                    'student_id_display': student.student_id,
+                    'class_name': student.school_class.name if student.school_class else '—',
+                    'total_days': total,
+                    'present': present,
+                    'absent': absent,
+                    'late': late,
+                    'percentage': percentage,
+                    'status': status_label
+                })
+            
+            return Response({
+                'generated_at': timezone.now().isoformat(),
+                'filters': {'class': class_id, 'month': month},
+                'total_students': len(data),
+                'data': data
+            })
+        except Exception as e:
+            return Response(
+                {'detail': f'Error generating attendance report: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )

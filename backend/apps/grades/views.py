@@ -594,3 +594,84 @@ class SubjectSummaryView(APIView):
                 {"detail": f"Error fetching subject summary: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+class PerformanceReportView(APIView):
+    """
+    Generate a student performance report with marks, grades, and averages.
+    Supports filtering by class, semester, and subject.
+    """
+    permission_classes = [IsAdmin]
+
+    def get(self, request):
+        try:
+            from apps.students.models import Student
+            
+            class_id = request.query_params.get('class')
+            semester = request.query_params.get('semester')
+            subject = request.query_params.get('subject')
+            
+            # Get students
+            if class_id:
+                students = Student.objects.filter(school_class_id=class_id, is_active=True)
+            else:
+                students = Student.objects.filter(is_active=True)
+            
+            data = []
+            for student in students:
+                marks = MarkEntry.objects.filter(
+                    student=student,
+                    approved_at__isnull=False
+                )
+                if semester:
+                    marks = marks.filter(semester=semester)
+                if subject:
+                    marks = marks.filter(subject=subject)
+                
+                subjects_data = {}
+                for mark in marks:
+                    subject_name = mark.subject.name if mark.subject else '—'
+                    if subject_name not in subjects_data:
+                        subjects_data[subject_name] = {}
+                    subjects_data[subject_name][mark.assessment_type] = float(mark.score)
+                
+                overall_avg = marks.aggregate(avg=Avg('score'))['avg']
+                
+                # Determine grade
+                if overall_avg:
+                    overall_avg = round(float(overall_avg), 1)
+                    if overall_avg >= 80:
+                        grade = 'A'
+                    elif overall_avg >= 70:
+                        grade = 'B'
+                    elif overall_avg >= 60:
+                        grade = 'C'
+                    elif overall_avg >= 50:
+                        grade = 'D'
+                    else:
+                        grade = 'F'
+                else:
+                    overall_avg = 0
+                    grade = '—'
+                
+                data.append({
+                    'student_id': str(student.id),
+                    'student_name': student.full_name,
+                    'student_id_display': student.student_id,
+                    'class_name': student.school_class.name if student.school_class else '—',
+                    'subjects': subjects_data,
+                    'overall_average': overall_avg,
+                    'grade': grade
+                })
+            
+            return Response({
+                'generated_at': timezone.now().isoformat(),
+                'filters': {'class': class_id, 'semester': semester, 'subject': subject},
+                'total_students': len(data),
+                'data': data
+            })
+        except Exception as e:
+            return Response(
+                {'detail': f'Error generating performance report: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )

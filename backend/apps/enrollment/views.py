@@ -384,3 +384,55 @@ class EnrollmentStatsView(APIView):
             }
         )
         return Response(serializer.data)
+
+
+class EnrollmentReportView(APIView):
+    """
+    Generate an enrollment report with application statistics and recent enrollments.
+    Shows summary by status, breakdown by grade, and recent applications.
+    """
+    permission_classes = [IsAuthenticated, IsAdminOrCashier]
+
+    def get(self, request):
+        try:
+            from django.db.models import Count
+            
+            total = EnrollmentRequest.objects.count()
+            pending = EnrollmentRequest.objects.filter(status=EnrollmentStatus.PENDING).count()
+            reviewed = EnrollmentRequest.objects.filter(status=EnrollmentStatus.REVIEWED).count()
+            approved = EnrollmentRequest.objects.filter(status=EnrollmentStatus.APPROVED).count()
+            rejected = EnrollmentRequest.objects.filter(status=EnrollmentStatus.REJECTED).count()
+            
+            # Breakdown by grade
+            by_grade = EnrollmentRequest.objects.values('grade_applying').annotate(
+                count=Count('id')
+            ).order_by('grade_applying')
+            
+            # Recent enrollments (last 20)
+            recent = EnrollmentRequest.objects.order_by('-created_at')[:20]
+            recent_data = [{
+                'admission_number': e.admission_number,
+                'full_name': f"{e.first_name} {e.last_name}",
+                'grade': e.grade_applying,
+                'status': e.status,
+                'payment_status': e.payment_status,
+                'created_at': e.created_at.isoformat(),
+            } for e in recent]
+            
+            return Response({
+                'generated_at': timezone.now().isoformat(),
+                'summary': {
+                    'total': total,
+                    'pending': pending,
+                    'reviewed': reviewed,
+                    'approved': approved,
+                    'rejected': rejected,
+                },
+                'by_grade': list(by_grade),
+                'recent_enrollments': recent_data,
+            })
+        except Exception as e:
+            return Response(
+                {'detail': f'Error generating enrollment report: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )

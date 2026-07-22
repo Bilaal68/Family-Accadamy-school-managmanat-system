@@ -7,6 +7,7 @@ from .views import (
     EnrollmentDetailView,
     EnrollmentListView,
     EnrollmentRejectView,
+    EnrollmentReportView,
     EnrollmentReviewView,
     EnrollmentStatsView,
     EnrollmentStatusView,
@@ -28,4 +29,5 @@ urlpatterns = [
     path("<uuid:id>/approve/", EnrollmentApproveView.as_view(), name="enrollment-approve"),
     path("<uuid:id>/reject/", EnrollmentRejectView.as_view(), name="enrollment-reject"),
     path("stats/", EnrollmentStatsView.as_view(), name="enrollment-stats"),
+    path("report/", EnrollmentReportView.as_view(), name="enrollment-report"),
 ]

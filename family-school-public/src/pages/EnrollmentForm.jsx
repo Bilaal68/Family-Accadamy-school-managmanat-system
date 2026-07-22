@@ -1321,7 +1321,7 @@ export default function EnrollmentForm() {
 
                     <p className="text-xs text-gray-400 mb-1">Account Name</p>
 
-                    <p className="font-semibold text-[#10026B] text-sm">Family Academy</p>
+                    <p className="font-semibold text-[#10026B] text-sm">MATI Academy</p>
 
                   </div>
 
@@ -1335,7 +1335,7 @@ export default function EnrollmentForm() {
 
                       <p className="font-semibold text-[#10026B] tracking-widest text-sm break-all">
 
-                        1000123456789
+                        1000782250958
 
                       </p>
 
@@ -1367,9 +1367,31 @@ export default function EnrollmentForm() {
 
                     <p className="text-xs text-gray-400 mb-1">Registration Fee</p>
 
-                    {/* Registration Fee Amount: [get from school admin] */}
+                    {/* Registration Fee Amount: ETB 500 */}
+
+                    <p className="font-semibold text-[#10026B] text-sm">ETB 500</p>
+
+                  </div>
+
+                  <div className="bg-white rounded-lg p-3 sm:p-4 border border-gray-100">
+
+                    <p className="text-xs text-gray-400 mb-1">Monthly Fee</p>
+
+                    {/* Monthly Fee Amount: ETB 1,500 */}
 
                     <p className="font-semibold text-[#10026B] text-sm">ETB 1,500</p>
+
+                  </div>
+
+                  <div className="bg-white rounded-lg p-3 sm:p-4 border border-gray-100 sm:col-span-2 bg-[#10026B] text-white">
+
+                    <p className="text-xs text-gray-100 mb-1">Total Amount Due</p>
+
+                    {/* Total: Registration (500) + Monthly (1500) = 2000 */}
+
+                    <p className="font-bold text-lg text-[#C2B30C]">ETB 2,000</p>
+
+                    <p className="text-xs text-gray-200 mt-1">Registration 500 + Monthly 1,500</p>
 
                   </div>
 
