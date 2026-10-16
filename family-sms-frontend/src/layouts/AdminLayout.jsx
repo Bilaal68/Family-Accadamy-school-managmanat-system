@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 const baseNavItems = [
   { to: "/admin/dashboard", label: "Dashboard" },
   { to: "/admin/students", label: "Students" },
+  { to: "/admin/id-cards", label: "ID Generator" },
   { to: "/admin/teachers", label: "Teachers" },
   { to: "/admin/classes", label: "Classes" },
   { to: "/admin/attendance", label: "Attendance" },

@@ -2,6 +2,7 @@ import {
   CalendarCheck,
   CheckCircle,
   ClipboardList,
+  CreditCard,
   FileText,
   GraduationCap,
   LayoutDashboard,
@@ -17,6 +18,7 @@ import { cn } from "@/lib/utils";
 const ICONS = {
   "/admin/dashboard": LayoutDashboard,
   "/admin/students": Users,
+  "/admin/id-cards": CreditCard,
   "/admin/teachers": GraduationCap,
   "/admin/classes": School,
   "/admin/attendance": CalendarCheck,

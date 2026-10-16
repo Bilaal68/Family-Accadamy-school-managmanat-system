@@ -24,7 +24,14 @@ from apps.students.serializers import (
     StudentListSerializer,
     StudentWriteSerializer,
 )
+from django.http import HttpResponse
 from apps.students.services import process_bulk_upload
+from apps.students.id_card_service import (
+    generate_single_student_id_pdf,
+    generate_bulk_id_cards_pdf,
+    generate_id_card_front_image,
+    generate_id_card_back_image,
+)
 
 
 class StudentPagination(PageNumberPagination):
@@ -194,3 +201,145 @@ class StudentViewSet(viewsets.ModelViewSet):
         notes = StudentRemark.objects.filter(student=student).select_related("author")
         serializer = StudentRemarkSerializer(notes, many=True)
         return Response(serializer.data)
+
+    @action(detail=True, methods=["get"], url_path="id-card")
+    def id_card(self, request, pk=None):
+        """
+        Download printable CR80 standard Student ID Card PDF (Front & Back).
+        """
+        student = self.get_object()
+        self.check_object_permissions(request, student)
+        academic_year = request.query_params.get("academic_year")
+        pdf_bytes = generate_single_student_id_pdf(student, academic_year=academic_year)
+        
+        filename = f"ID_Card_{student.student_id}.pdf"
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
+
+    @action(detail=True, methods=["get"], url_path="id-card-preview")
+    def id_card_preview(self, request, pk=None):
+        """
+        Get image preview for Front or Back of Student ID Card (JPEG).
+        Query param: ?side=front (default) or ?side=back
+        """
+        student = self.get_object()
+        self.check_object_permissions(request, student)
+        side = request.query_params.get("side", "front").lower()
+        academic_year = request.query_params.get("academic_year")
+
+        if side == "back":
+            img = generate_id_card_back_image(student)
+        else:
+            img = generate_id_card_front_image(student, academic_year=academic_year)
+
+        import io
+        buf = io.BytesIO()
+        img.save(buf, format="JPEG", quality=90)
+        return HttpResponse(buf.getvalue(), content_type="image/jpeg")
+
+    @action(detail=False, methods=["get", "post"], url_path="bulk-id-cards")
+    def bulk_id_cards(self, request):
+        """
+        Download multi-student ID card printable sheet PDF (A4 format).
+        Accepts:
+        - GET: ?class_id=<uuid>&academic_year=...
+        - POST: {"student_ids": ["uuid1", "uuid2"], "academic_year": "..."}
+        """
+        academic_year = request.data.get("academic_year") if request.method == "POST" else request.query_params.get("academic_year")
+        
+        queryset = self.get_queryset()
+        if request.method == "POST" and request.data.get("student_ids"):
+            student_ids = request.data.get("student_ids")
+            queryset = queryset.filter(id__in=student_ids)
+        else:
+            class_id = request.query_params.get("class_id") or request.query_params.get("class")
+            if class_id:
+                queryset = queryset.filter(school_class_id=class_id)
+            else:
+                # Limit to 50 if no filter to avoid accidental mega PDF
+                queryset = queryset[:50]
+
+        students = list(queryset)
+        if not students:
+            return Response({"detail": "No students found matching criteria."}, status=status.HTTP_404_NOT_FOUND)
+
+        pdf_bytes = generate_bulk_id_cards_pdf(students, academic_year=academic_year)
+        filename = f"Student_ID_Cards_Batch_{len(students)}.pdf"
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
+
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="generate-custom-id",
+        parser_classes=[MultiPartParser, FormParser, JSONParser],
+    )
+    def generate_custom_id(self, request):
+        """
+        Generate and download PDF for manually entered student details (optional custom photo upload).
+        """
+        manual_data = {
+            "full_name": request.data.get("full_name") or "Student Name",
+            "student_id": request.data.get("student_id") or "STU-00001",
+            "class_name": request.data.get("class_name") or "Grade 1A",
+            "academic_year": request.data.get("academic_year") or "2026 / 2027",
+            "guardian_name": request.data.get("guardian_name") or "",
+            "relationship": request.data.get("relationship") or "Parent / Guardian",
+            "emergency_contact": request.data.get("emergency_contact") or "+251 98 954 3580",
+            "address": request.data.get("address") or "Addis Ababa, Ethiopia",
+        }
+        photo_file = request.FILES.get("photo")
+
+        pdf_bytes = generate_single_student_id_pdf(
+            student=None,
+            academic_year=manual_data["academic_year"],
+            manual_data=manual_data,
+            photo_file=photo_file,
+        )
+        clean_id = manual_data["student_id"].replace(" ", "_")
+        filename = f"ID_Card_{clean_id}.pdf"
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
+
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="preview-custom-id",
+        parser_classes=[MultiPartParser, FormParser, JSONParser],
+    )
+    def preview_custom_id(self, request):
+        """
+        Preview front or back of manually entered ID card.
+        """
+        side = request.query_params.get("side") or request.data.get("side") or "front"
+        manual_data = {
+            "full_name": request.data.get("full_name") or "Student Name",
+            "student_id": request.data.get("student_id") or "STU-00001",
+            "class_name": request.data.get("class_name") or "Grade 1A",
+            "academic_year": request.data.get("academic_year") or "2026 / 2027",
+            "guardian_name": request.data.get("guardian_name") or "",
+            "relationship": request.data.get("relationship") or "Parent / Guardian",
+            "emergency_contact": request.data.get("emergency_contact") or "+251 98 954 3580",
+            "address": request.data.get("address") or "Addis Ababa, Ethiopia",
+        }
+        photo_file = request.FILES.get("photo")
+
+        if side == "back":
+            img = generate_id_card_back_image(student=None, manual_data=manual_data)
+        else:
+            img = generate_id_card_front_image(
+                student=None,
+                academic_year=manual_data["academic_year"],
+                manual_data=manual_data,
+                photo_file=photo_file,
+            )
+
+        import io
+        buf = io.BytesIO()
+        img.save(buf, format="JPEG", quality=90)
+        return HttpResponse(buf.getvalue(), content_type="image/jpeg")
+
+

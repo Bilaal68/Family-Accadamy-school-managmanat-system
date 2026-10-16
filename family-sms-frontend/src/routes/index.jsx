@@ -22,6 +22,7 @@ import MarksPage from "@/features/admin/pages/MarksPage";
 import ReportsPage from "@/features/admin/pages/ReportsPage";
 import StudentsList from "@/features/admin/pages/students/StudentsList";
 import StudentDetail from "@/features/admin/pages/students/StudentDetail";
+import IdCardGeneratorPage from "@/features/admin/pages/IdCardGeneratorPage";
 import TeachersList from "@/features/admin/pages/teachers/TeachersList";
 import TeacherDetail from "@/features/admin/pages/teachers/TeacherDetail";
 import AdminFormPlaceholder from "@/features/admin/pages/AdminFormPlaceholder";
@@ -61,6 +62,7 @@ export default function AppRoutes() {
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="students" element={<StudentsList />} />
         <Route path="students/:id" element={<StudentDetail />} />
+        <Route path="id-cards" element={<IdCardGeneratorPage />} />
         <Route path="teachers" element={<TeachersList />} />
         <Route path="teachers/:id" element={<TeacherDetail />} />
         <Route path="classes" element={<ClassesList />} />

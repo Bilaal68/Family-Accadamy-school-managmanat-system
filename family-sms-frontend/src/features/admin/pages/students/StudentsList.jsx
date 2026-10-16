@@ -1,8 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import {
+  CreditCard,
+  Download,
   Eye,
   Link2,
+  Loader2,
   Pencil,
   Search,
   Trash2,
@@ -13,7 +16,7 @@ import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 
 import { fetchClassesList } from "@/api/classes";
-import { deleteStudent, fetchStudents } from "@/api/students";
+import { deleteStudent, fetchStudents, downloadBulkIdCards } from "@/api/students";
 import ConfirmDeleteDialog from "@/components/shared/ConfirmDeleteDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,6 +41,7 @@ import useDebouncedValue from "@/hooks/useDebouncedValue";
 
 import EditStudentModal from "./EditStudentModal";
 import StudentAvatar from "./StudentAvatar";
+import StudentIdCardModal from "./StudentIdCardModal";
 
 const PAGE_SIZE = 20;
 
@@ -58,6 +62,32 @@ export default function StudentsList() {
   const [page, setPage] = useState(1);
   const [editStudent, setEditStudent] = useState(null);
   const [deleteStudentTarget, setDeleteStudentTarget] = useState(null);
+  const [idCardTarget, setIdCardTarget] = useState(null);
+  const [bulkDownloading, setBulkDownloading] = useState(false);
+
+  const handleBulkDownload = async () => {
+    try {
+      setBulkDownloading(true);
+      const res = await downloadBulkIdCards({
+        classId: classFilter !== "all" ? classFilter : undefined,
+      });
+      const blob = new Blob([res.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `ID_Cards_Batch_${classFilter !== "all" ? "Class" : "All"}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("ID cards PDF downloaded successfully");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to generate bulk ID cards");
+    } finally {
+      setBulkDownloading(false);
+    }
+  };
 
   const debouncedSearch = useDebouncedValue(search, 300);
 
@@ -136,6 +166,22 @@ export default function StudentsList() {
               ))}
             </SelectContent>
           </Select>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={bulkDownloading || studentsQ.isLoading}
+            onClick={handleBulkDownload}
+            className="flex items-center gap-1.5 border-[#10026B] text-[#10026B] hover:bg-[#10026B] hover:text-white"
+            title="Download multi-student ID card printable sheet PDF"
+          >
+            {bulkDownloading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <CreditCard className="h-4 w-4" />
+            )}
+            <span>Batch ID Cards</span>
+          </Button>
         </div>
       </div>
 
@@ -227,6 +273,15 @@ export default function StudentsList() {
                           <Button
                             variant="ghost"
                             size="sm"
+                            className="h-8 w-8 p-0 sm:size-auto sm:px-3 text-[#10026B] hover:bg-neutral-100"
+                            title="Generate ID Card"
+                            onClick={() => setIdCardTarget(student)}
+                          >
+                            <CreditCard className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             className="h-8 w-8 p-0 sm:size-auto sm:px-3"
                             title="Edit"
                             onClick={() => setEditStudent(student)}
@@ -282,6 +337,12 @@ export default function StudentsList() {
         open={!!editStudent}
         student={editStudent}
         onClose={() => setEditStudent(null)}
+      />
+
+      <StudentIdCardModal
+        student={idCardTarget}
+        open={!!idCardTarget}
+        onOpenChange={(open) => !open && setIdCardTarget(null)}
       />
       
       <ConfirmDeleteDialog

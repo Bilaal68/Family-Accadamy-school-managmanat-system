@@ -10,8 +10,18 @@ from decouple import Csv, config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# If an external environment variable like DEBUG=release is present, remove it so .env is read
+import os
+if os.environ.get("DEBUG", "").lower() in ("release", "debug"):
+    os.environ.pop("DEBUG", None)
+
+def _cast_bool(val):
+    if isinstance(val, bool):
+        return val
+    return str(val).strip().lower() in ("true", "1", "yes", "on", "t")
+
 SECRET_KEY = config("SECRET_KEY")
-DEBUG = config("DEBUG", default=False, cast=bool)
+DEBUG = config("DEBUG", default=False, cast=_cast_bool)
 ALLOWED_HOSTS = config("ALLOWED_HOSTS", cast=Csv())
 
 # ---------------------------------------------------------------------------
@@ -140,6 +150,7 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [BASE_DIR / "static"] if (BASE_DIR / "static").exists() else []
 STORAGES = {
     "default": {
         "BACKEND": "django.core.files.storage.FileSystemStorage",

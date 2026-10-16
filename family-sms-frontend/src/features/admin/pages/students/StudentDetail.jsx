@@ -9,7 +9,7 @@ import {
   startOfMonth,
   subMonths,
 } from "date-fns";
-import { ArrowLeft, ChevronLeft, ChevronRight, Calendar, BookOpen, AlertCircle, User, Printer, FileText, Download, ExternalLink } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Calendar, BookOpen, AlertCircle, User, Printer, FileText, Download, ExternalLink, CreditCard } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
@@ -36,6 +36,7 @@ import SectionError from "@/components/shared/SectionError";
 import { ListSkeleton } from "@/components/shared/SectionSkeleton";
 
 import StudentAvatar from "./StudentAvatar";
+import StudentIdCardModal from "./StudentIdCardModal";
 
 const GENDER_LABELS = { M: "Male", F: "Female", OTHER: "Other" };
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -168,6 +169,8 @@ export default function StudentDetail() {
     },
   });
 
+  const [idCardModalOpen, setIdCardModalOpen] = useState(false);
+
   const monthAttendance = useMemo(() => {
     if (!attendanceQ.data) return [];
     const start = format(startOfMonth(heatmapMonth), "yyyy-MM-dd");
@@ -208,16 +211,33 @@ export default function StudentDetail() {
           <ArrowLeft className="h-4 w-4" />
           Back to students
         </Link>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => window.print()}
-          className="flex items-center gap-2 border-[#10026B] text-[#10026B] hover:bg-[#10026B] hover:text-white"
-        >
-          <Printer className="w-4 h-4" />
-          Print Profile
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => setIdCardModalOpen(true)}
+            className="flex items-center gap-2 bg-[#10026B] hover:bg-[#1a0a8a] text-white shadow-sm"
+          >
+            <CreditCard className="w-4 h-4" />
+            Student ID Card
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.print()}
+            className="flex items-center gap-2 border-[#10026B] text-[#10026B] hover:bg-[#10026B] hover:text-white"
+          >
+            <Printer className="w-4 h-4" />
+            Print Profile
+          </Button>
+        </div>
       </div>
+
+      <StudentIdCardModal
+        student={student}
+        open={idCardModalOpen}
+        onOpenChange={setIdCardModalOpen}
+      />
 
       <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
         <Card className="border-[#E5E5E5] bg-white h-fit">

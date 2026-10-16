@@ -58,3 +58,64 @@ export function fetchStudentRemarks(id) {
 export function deleteStudent(id) {
   return client.delete(`/students/${id}/`);
 }
+
+export function getStudentIdCardUrl(id, academicYear) {
+  const baseURL = client.defaults.baseURL || "/api/v1";
+  const params = academicYear ? `?academic_year=${encodeURIComponent(academicYear)}` : "";
+  return `${baseURL}/students/${id}/id-card/${params}`;
+}
+
+export function fetchStudentIdCardPreview(id, side = "front", academicYear) {
+  return client.get(`/students/${id}/id-card-preview/`, {
+    params: {
+      side,
+      ...(academicYear ? { academic_year: academicYear } : {}),
+    },
+    responseType: "blob",
+  });
+}
+
+export function getStudentIdCardPreviewUrl(id, side = "front", academicYear) {
+  const baseURL = client.defaults.baseURL || "/api/v1";
+  const query = new URLSearchParams({ side });
+  if (academicYear) query.set("academic_year", academicYear);
+  return `${baseURL}/students/${id}/id-card-preview/?${query.toString()}`;
+}
+
+export function downloadStudentIdCard(id, academicYear) {
+  return client.get(`/students/${id}/id-card/`, {
+    params: academicYear ? { academic_year: academicYear } : {},
+    responseType: "blob",
+  });
+}
+
+export function downloadBulkIdCards({ classId, studentIds, academicYear }) {
+  if (studentIds && studentIds.length > 0) {
+    return client.post(
+      "/students/bulk-id-cards/",
+      { student_ids: studentIds, academic_year: academicYear },
+      { responseType: "blob" }
+    );
+  }
+  return client.get("/students/bulk-id-cards/", {
+    params: {
+      ...(classId ? { class_id: classId } : {}),
+      ...(academicYear ? { academic_year: academicYear } : {}),
+    },
+    responseType: "blob",
+  });
+}
+
+export function previewCustomIdCard(formData) {
+  return client.post("/students/preview-custom-id/", formData, {
+    responseType: "blob",
+  });
+}
+
+export function downloadCustomIdCard(formData) {
+  return client.post("/students/generate-custom-id/", formData, {
+    responseType: "blob",
+  });
+}
+
+
