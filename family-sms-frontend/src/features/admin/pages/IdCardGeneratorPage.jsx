@@ -112,7 +112,8 @@ export default function IdCardGeneratorPage() {
   // Load preview blob for selected student (uses Authorization Bearer token header)
   useEffect(() => {
     let active = true;
-    if (!selectedStudent) {
+    let currentUrl = null;
+    if (!selectedStudent?.id) {
       setSelectedPreviewBlobUrl(null);
       return;
     }
@@ -120,9 +121,13 @@ export default function IdCardGeneratorPage() {
       try {
         setSelectedStudentPreviewLoading(true);
         const res = await fetchStudentIdCardPreview(selectedStudent.id, side, academicYear);
-        if (active) {
-          const blobUrl = URL.createObjectURL(new Blob([res.data], { type: "image/jpeg" }));
-          setSelectedPreviewBlobUrl(blobUrl);
+        if (active && res?.data) {
+          const blob = res.data instanceof Blob ? res.data : new Blob([res.data], { type: "image/jpeg" });
+          currentUrl = URL.createObjectURL(blob);
+          setSelectedPreviewBlobUrl((prev) => {
+            if (prev) URL.revokeObjectURL(prev);
+            return currentUrl;
+          });
         }
       } catch (err) {
         console.error("Failed to load selected student preview", err);
@@ -134,7 +139,7 @@ export default function IdCardGeneratorPage() {
     return () => {
       active = false;
     };
-  }, [selectedStudent, side, academicYear]);
+  }, [selectedStudent?.id, side, academicYear]);
 
   // Handle manual preview generation
   const refreshManualPreview = async () => {
@@ -149,8 +154,14 @@ export default function IdCardGeneratorPage() {
         fd.append("photo", manualPhoto);
       }
       const res = await previewCustomIdCard(fd);
-      const url = URL.createObjectURL(new Blob([res.data], { type: "image/jpeg" }));
-      setManualPreviewBlobUrl(url);
+      if (res?.data) {
+        const blob = res.data instanceof Blob ? res.data : new Blob([res.data], { type: "image/jpeg" });
+        const url = URL.createObjectURL(blob);
+        setManualPreviewBlobUrl((prev) => {
+          if (prev) URL.revokeObjectURL(prev);
+          return url;
+        });
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -546,7 +557,7 @@ export default function IdCardGeneratorPage() {
                     {selectedStudentsList.map((st, index) => (
                       <div
                         key={st.id}
-                        className="flex items-center justify-between text-xs bg-white p-1.5 rounded border shadow-2xs"
+                        className="flex items-center justify-between text-xs bg-white p-1.5 rounded border shadow-sm"
                       >
                         <div className="flex items-center gap-2 truncate">
                           <span className="font-bold text-[#10026B] text-[11px] w-4">
@@ -855,7 +866,7 @@ export default function IdCardGeneratorPage() {
                     {manualQueue.map((item, index) => (
                       <div
                         key={item.id}
-                        className="flex items-center justify-between text-xs bg-white p-2 rounded border shadow-2xs"
+                        className="flex items-center justify-between text-xs bg-white p-2 rounded border shadow-sm"
                       >
                         <div className="flex items-center gap-2 truncate">
                           <span className="font-bold text-emerald-800 text-[11px] w-4">

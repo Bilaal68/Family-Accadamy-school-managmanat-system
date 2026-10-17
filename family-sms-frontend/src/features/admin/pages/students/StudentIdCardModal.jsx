@@ -21,15 +21,23 @@ export default function StudentIdCardModal({ student, open, onOpenChange }) {
 
   useEffect(() => {
     let active = true;
-    if (!student || !open) return;
+    let currentUrl = null;
+    if (!student || !open) {
+      setPreviewBlobUrl(null);
+      return;
+    }
 
     const loadPreview = async () => {
       try {
         setLoadingPreview(true);
         const res = await fetchStudentIdCardPreview(student.id, side, academicYear);
-        if (active) {
-          const url = URL.createObjectURL(new Blob([res.data], { type: "image/jpeg" }));
-          setPreviewBlobUrl(url);
+        if (active && res?.data) {
+          const blob = res.data instanceof Blob ? res.data : new Blob([res.data], { type: "image/jpeg" });
+          currentUrl = URL.createObjectURL(blob);
+          setPreviewBlobUrl((prev) => {
+            if (prev) URL.revokeObjectURL(prev);
+            return currentUrl;
+          });
         }
       } catch (err) {
         console.error("Failed to load preview in modal", err);
@@ -41,7 +49,7 @@ export default function StudentIdCardModal({ student, open, onOpenChange }) {
     return () => {
       active = false;
     };
-  }, [student, side, academicYear, open]);
+  }, [student?.id, side, academicYear, open]);
 
   const handleDownload = async () => {
     try {
@@ -94,7 +102,7 @@ export default function StudentIdCardModal({ student, open, onOpenChange }) {
               </p>
             </div>
             <span className="font-mono text-xs px-2.5 py-1 bg-amber-50 text-amber-700 font-semibold rounded-md border border-amber-200">
-              {student.student_id}
+              {student?.student_id || "N/A"}
             </span>
           </div>
         </DialogHeader>
@@ -106,10 +114,7 @@ export default function StudentIdCardModal({ student, open, onOpenChange }) {
             <div className="flex items-center gap-1.5 bg-white p-1 rounded-md border border-neutral-200">
               <button
                 type="button"
-                onClick={() => {
-                  setSide("front");
-                  setImgLoaded(false);
-                }}
+                onClick={() => setSide("front")}
                 className={`px-3 py-1.5 text-xs font-semibold rounded transition-all ${
                   side === "front"
                     ? "bg-[#10026B] text-white shadow-sm"
@@ -120,10 +125,7 @@ export default function StudentIdCardModal({ student, open, onOpenChange }) {
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  setSide("back");
-                  setImgLoaded(false);
-                }}
+                onClick={() => setSide("back")}
                 className={`px-3 py-1.5 text-xs font-semibold rounded transition-all ${
                   side === "back"
                     ? "bg-[#10026B] text-white shadow-sm"
@@ -140,10 +142,7 @@ export default function StudentIdCardModal({ student, open, onOpenChange }) {
               <input
                 type="text"
                 value={academicYear}
-                onChange={(e) => {
-                  setAcademicYear(e.target.value);
-                  setImgLoaded(false);
-                }}
+                onChange={(e) => setAcademicYear(e.target.value)}
                 className="w-28 text-xs font-semibold px-2 py-1.5 border rounded-md border-neutral-300 focus:outline-none focus:ring-1 focus:ring-[#10026B]"
                 placeholder="2026 / 2027"
               />
@@ -173,24 +172,26 @@ export default function StudentIdCardModal({ student, open, onOpenChange }) {
           </div>
 
           {/* Student details summary badge */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs bg-blue-50/50 p-2.5 rounded-lg border border-blue-100">
-            <div>
-              <span className="text-neutral-500 block">Student:</span>
-              <strong className="text-neutral-800 truncate block">{student.full_name}</strong>
+          {student && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs bg-blue-50/50 p-2.5 rounded-lg border border-blue-100">
+              <div>
+                <span className="text-neutral-500 block">Student:</span>
+                <strong className="text-neutral-800 truncate block">{student.full_name}</strong>
+              </div>
+              <div>
+                <span className="text-neutral-500 block">Class:</span>
+                <strong className="text-neutral-800 truncate block">{student.class_name || "N/A"}</strong>
+              </div>
+              <div>
+                <span className="text-neutral-500 block">Status:</span>
+                <span className="inline-block text-emerald-700 font-semibold">Active</span>
+              </div>
+              <div>
+                <span className="text-neutral-500 block">Standard:</span>
+                <span className="text-[#10026B] font-semibold">CR80 (85.6 × 54mm)</span>
+              </div>
             </div>
-            <div>
-              <span className="text-neutral-500 block">Class:</span>
-              <strong className="text-neutral-800 truncate block">{student.class_name || "N/A"}</strong>
-            </div>
-            <div>
-              <span className="text-neutral-500 block">Status:</span>
-              <span className="inline-block text-emerald-700 font-semibold">Active</span>
-            </div>
-            <div>
-              <span className="text-neutral-500 block">Standard:</span>
-              <span className="text-[#10026B] font-semibold">CR80 (85.6 × 54mm)</span>
-            </div>
-          </div>
+          )}
         </div>
 
         <DialogFooter className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t">
