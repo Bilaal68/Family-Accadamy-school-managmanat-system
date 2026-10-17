@@ -29,6 +29,7 @@ from apps.students.services import process_bulk_upload
 from apps.students.id_card_service import (
     generate_single_student_id_pdf,
     generate_bulk_id_cards_pdf,
+    generate_multi_items_id_cards_pdf,
     generate_id_card_front_image,
     generate_id_card_back_image,
 )
@@ -341,5 +342,63 @@ class StudentViewSet(viewsets.ModelViewSet):
         buf = io.BytesIO()
         img.save(buf, format="JPEG", quality=90)
         return HttpResponse(buf.getvalue(), content_type="image/jpeg")
+
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="generate-custom-bulk-ids",
+        parser_classes=[MultiPartParser, FormParser, JSONParser],
+    )
+    def generate_custom_bulk_ids(self, request):
+        """
+        Generate and download printable A4 PDF for multiple manual student cards (up to 5 per A4 sheet).
+        Accepts multipart form data or JSON:
+        - items: JSON-encoded string or list of student objects:
+          [
+            { "full_name": "...", "student_id": "...", "class_name": "...", "guardian_name": "...", ... }
+          ]
+        - photos can be uploaded as photo_0, photo_1, ... or photo_{student_id}
+        """
+        import json
+
+        raw_items = request.data.get("items")
+        if isinstance(raw_items, str):
+            try:
+                items_data = json.loads(raw_items)
+            except Exception:
+                items_data = []
+        elif isinstance(raw_items, list):
+            items_data = raw_items
+        else:
+            items_data = []
+
+        if not items_data:
+            return Response(
+                {"detail": "No student card items provided."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        academic_year = request.data.get("academic_year")
+
+        processed_items = []
+        for idx, item in enumerate(items_data):
+            # check for associated photo in request.FILES
+            photo = (
+                request.FILES.get(f"photo_{idx}")
+                or request.FILES.get(f"photo_{item.get('student_id')}")
+                or request.FILES.get("photo")
+            )
+            processed_items.append({
+                "manual_data": item,
+                "photo_file": photo,
+            })
+
+        pdf_bytes = generate_multi_items_id_cards_pdf(
+            processed_items, academic_year=academic_year
+        )
+        filename = f"Custom_ID_Cards_Sheet_{len(processed_items)}.pdf"
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
 
 

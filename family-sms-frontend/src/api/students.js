@@ -118,4 +118,10 @@ export function downloadCustomIdCard(formData) {
   });
 }
 
+export function downloadCustomBulkIdCards(formData) {
+  return client.post("/students/generate-custom-bulk-ids/", formData, {
+    responseType: "blob",
+  });
+}
+
 

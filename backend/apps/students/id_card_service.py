@@ -304,16 +304,6 @@ def generate_single_student_id_pdf(student=None, academic_year=None, manual_data
     # Place in the upper third for convenient cutting / lamination
     start_y = page_h - 45 * mm - card_h
 
-    # Sheet Header
-    c.setFont("Helvetica-Bold", 12)
-    c.setFillColor(colors.HexColor("#10026B"))
-    student_title = (student.full_name if student else (manual_data.get("full_name") if manual_data else "Student"))
-    id_title = (student.student_id if student else (manual_data.get("student_id") if manual_data else "ID"))
-    c.drawString(start_x, page_h - 22 * mm, "Family Academy — Student Identity Card (300 DPI Print Sheet)")
-    c.setFont("Helvetica", 9)
-    c.setFillColor(colors.HexColor("#555555"))
-    c.drawString(start_x, page_h - 28 * mm, f"Student: {student_title}   |   ID: {id_title}   |   Format: CR80 (85.6mm × 54mm)")
-
     # Draw Front & Back cards
     x_front = start_x
     x_back = start_x + card_w + h_gap
@@ -321,28 +311,23 @@ def generate_single_student_id_pdf(student=None, academic_year=None, manual_data
     c.drawImage(ImageReader(front_buf), x_front, start_y, width=card_w, height=card_h)
     c.drawImage(ImageReader(back_buf), x_back, start_y, width=card_w, height=card_h)
 
-    # Cut guide borders
+    # Cut guide borders (subtle clean cutting line only, no distracting text)
     c.setStrokeColor(colors.HexColor("#BBBBBB"))
-    c.setLineWidth(0.6)
+    c.setLineWidth(0.5)
     c.rect(x_front, start_y, card_w, card_h)
     c.rect(x_back, start_y, card_w, card_h)
-
-    # Cut marks & labels
-    c.setFont("Helvetica-Bold", 8)
-    c.setFillColor(colors.HexColor("#10026B"))
-    c.drawString(x_front, start_y - 4 * mm, "FRONT SIDE [Fold / Cut along border]")
-    c.drawString(x_back, start_y - 4 * mm, "BACK SIDE [Fold / Cut along border]")
 
     c.showPage()
     c.save()
     pdf_buffer.seek(0)
     return pdf_buffer.getvalue()
 
-def generate_bulk_id_cards_pdf(students, academic_year=None):
+def generate_multi_items_id_cards_pdf(items, academic_year=None):
     """
-    Generates a printable multi-page A4 PDF at 300 DPI containing
-    EXACTLY 5 students per A4 sheet (5 rows × 2 columns: Front & Back beside each other).
-    5 ID cards Front + 5 ID cards Back = 10 total badges per A4 page.
+    Generates a printable A4 PDF at 300 DPI containing up to 5 items per A4 sheet
+    (5 rows × 2 columns: Front & Back beside each other).
+    Items can be Student model instances or dicts containing manual_data and optional photo_file.
+    No under-card text labels or headers are printed, keeping the paper completely clean for use.
     """
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.utils import ImageReader
@@ -355,28 +340,37 @@ def generate_bulk_id_cards_pdf(students, academic_year=None):
     card_w = 85.60 * mm
     card_h = 53.98 * mm
 
-    # 5 rows x 2 columns (Front & Back beside each other)
-    # Total cards per A4 page = 5 students
     cards_per_page = 5
     h_gap = 10 * mm
     v_gap = 3.8 * mm
 
     total_w = (card_w * 2) + h_gap
-    total_h = (cards_per_page * card_h) + ((cards_per_page - 1) * v_gap)
-
     margin_x = (page_w - total_w) / 2
     margin_top = 8 * mm
 
-    student_list = list(students)
-    if not student_list:
+    item_list = list(items)
+    if not item_list:
         return b""
 
-    for page_idx in range(0, len(student_list), cards_per_page):
-        batch = student_list[page_idx : page_idx + cards_per_page]
+    for page_idx in range(0, len(item_list), cards_per_page):
+        batch = item_list[page_idx : page_idx + cards_per_page]
 
-        for row_idx, student in enumerate(batch):
-            front_img = generate_id_card_front_image(student, academic_year)
-            back_img = generate_id_card_back_image(student)
+        for row_idx, item in enumerate(batch):
+            if isinstance(item, dict):
+                # Manual item dict: { "manual_data": {...}, "photo_file": ... }
+                manual_data = item.get("manual_data") or item
+                photo_file = item.get("photo_file")
+                front_img = generate_id_card_front_image(
+                    student=None,
+                    academic_year=academic_year or manual_data.get("academic_year"),
+                    manual_data=manual_data,
+                    photo_file=photo_file,
+                )
+                back_img = generate_id_card_back_image(student=None, manual_data=manual_data)
+            else:
+                # Student model
+                front_img = generate_id_card_front_image(item, academic_year)
+                back_img = generate_id_card_back_image(item)
 
             f_buf = io.BytesIO()
             front_img.save(f_buf, format="JPEG", quality=95, optimize=True, dpi=(300, 300))
@@ -395,7 +389,7 @@ def generate_bulk_id_cards_pdf(students, academic_year=None):
             c.drawImage(ImageReader(f_buf), x_front, y, width=card_w, height=card_h)
             c.drawImage(ImageReader(b_buf), x_back, y, width=card_w, height=card_h)
 
-            # Draw precise cut guidelines
+            # Draw precise clean cut guidelines (only light boundary lines)
             c.setStrokeColor(colors.HexColor("#CCCCCC"))
             c.setLineWidth(0.5)
             c.rect(x_front, y, card_w, card_h)
@@ -406,3 +400,9 @@ def generate_bulk_id_cards_pdf(students, academic_year=None):
     c.save()
     pdf_buffer.seek(0)
     return pdf_buffer.getvalue()
+
+def generate_bulk_id_cards_pdf(students, academic_year=None):
+    """
+    Backwards-compatible wrapper around generate_multi_items_id_cards_pdf.
+    """
+    return generate_multi_items_id_cards_pdf(students, academic_year=academic_year)

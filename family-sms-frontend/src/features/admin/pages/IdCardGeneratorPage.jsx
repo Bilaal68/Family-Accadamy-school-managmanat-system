@@ -12,6 +12,10 @@ import {
   CheckCircle,
   FileText,
   Users,
+  Plus,
+  Trash2,
+  CheckSquare,
+  Square,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -24,6 +28,7 @@ import {
   downloadBulkIdCards,
   previewCustomIdCard,
   downloadCustomIdCard,
+  downloadCustomBulkIdCards,
 } from "@/api/students";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,13 +50,14 @@ export default function IdCardGeneratorPage() {
     `${new Date().getFullYear()} / ${new Date().getFullYear() + 1}`
   );
 
-  // Tab 1: Select Student state
+  // Tab 1: Select Student state (Support 1 to 5 students on 1 A4 sheet)
   const [studentSearch, setStudentSearch] = useState("");
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [selectedStudentsList, setSelectedStudentsList] = useState([]); // up to 5 students
   const [selectedPreviewBlobUrl, setSelectedPreviewBlobUrl] = useState(null);
   const [selectedStudentPreviewLoading, setSelectedStudentPreviewLoading] = useState(false);
 
-  // Tab 2: Manual generator state
+  // Tab 2: Manual generator state & Queue (up to 5 students on 1 A4 sheet)
   const [manualForm, setManualForm] = useState({
     full_name: "",
     student_id: "STU-00001",
@@ -63,6 +69,7 @@ export default function IdCardGeneratorPage() {
     address: "Addis Ababa, Ethiopia",
   });
   const [manualPhoto, setManualPhoto] = useState(null);
+  const [manualQueue, setManualQueue] = useState([]); // Array of { id, manual_data, photo, photo_preview_url }
   const [manualPreviewBlobUrl, setManualPreviewBlobUrl] = useState(null);
   const [manualPreviewLoading, setManualPreviewLoading] = useState(false);
   const fileInputRef = useRef(null);
@@ -158,21 +165,45 @@ export default function IdCardGeneratorPage() {
   }, [activeTab, side, manualForm.student_id, manualForm.full_name, manualForm.class_name, manualPhoto]);
 
   // Handlers for Tab 1 (Select Student)
+  const toggleStudentSelection = (student) => {
+    const exists = selectedStudentsList.some((s) => s.id === student.id);
+    if (exists) {
+      setSelectedStudentsList((prev) => prev.filter((s) => s.id !== student.id));
+    } else {
+      if (selectedStudentsList.length >= 5) {
+        toast.error("You can select up to 5 students per A4 print sheet.");
+        return;
+      }
+      setSelectedStudentsList((prev) => [...prev, student]);
+    }
+  };
+
   const handleSelectDownload = async () => {
-    if (!selectedStudent) return;
+    // If multiple students selected in queue, download all selected (up to 5)
+    // If none checked in multi-select tray, download the currently previewed single student
+    const targetStudents = selectedStudentsList.length > 0 ? selectedStudentsList : (selectedStudent ? [selectedStudent] : []);
+    if (targetStudents.length === 0) return;
+
     try {
       setDownloading(true);
-      const res = await downloadStudentIdCard(selectedStudent.id, academicYear);
+      const studentIds = targetStudents.map((s) => s.id);
+      const res = await downloadBulkIdCards({ studentIds, academicYear });
       const blob = new Blob([res.data], { type: "application/pdf" });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `ID_Card_${selectedStudent.student_id || selectedStudent.full_name}.pdf`;
+      a.download = targetStudents.length === 1
+        ? `ID_Card_${targetStudents[0].student_id || targetStudents[0].full_name}.pdf`
+        : `ID_Cards_A4_Sheet_${targetStudents.length}_students.pdf`;
       document.body.appendChild(a);
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
-      toast.success("Student ID Card downloaded!");
+      toast.success(
+        targetStudents.length === 1
+          ? "Student ID Card downloaded!"
+          : `${targetStudents.length} Student IDs downloaded on A4 Sheet!`
+      );
     } catch (e) {
       toast.error("Failed to download ID Card");
     } finally {
@@ -181,10 +212,13 @@ export default function IdCardGeneratorPage() {
   };
 
   const handleSelectPrint = async () => {
-    if (!selectedStudent) return;
+    const targetStudents = selectedStudentsList.length > 0 ? selectedStudentsList : (selectedStudent ? [selectedStudent] : []);
+    if (targetStudents.length === 0) return;
+
     try {
       setDownloading(true);
-      const res = await downloadStudentIdCard(selectedStudent.id, academicYear);
+      const studentIds = targetStudents.map((s) => s.id);
+      const res = await downloadBulkIdCards({ studentIds, academicYear });
       const blob = new Blob([res.data], { type: "application/pdf" });
       const url = window.URL.createObjectURL(blob);
       const win = window.open(url);
@@ -197,25 +231,83 @@ export default function IdCardGeneratorPage() {
   };
 
   // Handlers for Tab 2 (Manual)
+  const addCurrentToManualQueue = () => {
+    if (!manualForm.full_name.trim()) {
+      toast.error("Please enter student name.");
+      return;
+    }
+    if (manualQueue.length >= 5) {
+      toast.error("An A4 sheet holds up to 5 ID cards. Maximum 5 reached.");
+      return;
+    }
+    const newItem = {
+      id: Date.now().toString(),
+      manual_data: { ...manualForm },
+      photo: manualPhoto,
+      photo_preview: manualPhoto ? URL.createObjectURL(manualPhoto) : null,
+    };
+    setManualQueue((prev) => [...prev, newItem]);
+    toast.success(`Added ${manualForm.full_name} to Print Queue (${manualQueue.length + 1}/5)`);
+
+    // Reset some form fields for next student
+    setManualForm((prev) => ({
+      ...prev,
+      full_name: "",
+      student_id: `STU-${String(Math.floor(1000 + Math.random() * 9000))}`,
+      guardian_name: "",
+    }));
+    setManualPhoto(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const removeManualQueueItem = (id) => {
+    setManualQueue((prev) => prev.filter((item) => item.id !== id));
+  };
+
   const handleManualDownload = async () => {
     try {
       setDownloading(true);
-      const fd = new FormData();
-      Object.entries(manualForm).forEach(([k, v]) => {
-        fd.append(k, v || "");
-      });
-      if (manualPhoto) fd.append("photo", manualPhoto);
-      const res = await downloadCustomIdCard(fd);
-      const blob = new Blob([res.data], { type: "application/pdf" });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `ID_Card_${manualForm.student_id || "Custom"}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-      toast.success("Custom ID Card downloaded!");
+      if (manualQueue.length > 0) {
+        // Bulk manual queue (1 to 5 students)
+        const fd = new FormData();
+        const items = manualQueue.map((item) => item.manual_data);
+        fd.append("items", JSON.stringify(items));
+        fd.append("academic_year", academicYear);
+        manualQueue.forEach((item, idx) => {
+          if (item.photo) {
+            fd.append(`photo_${idx}`, item.photo);
+          }
+        });
+        const res = await downloadCustomBulkIdCards(fd);
+        const blob = new Blob([res.data], { type: "application/pdf" });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `Manual_ID_Cards_A4_Sheet_${manualQueue.length}_cards.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        toast.success(`Generated A4 sheet with ${manualQueue.length} custom ID cards!`);
+      } else {
+        // Single manual card from active form
+        const fd = new FormData();
+        Object.entries(manualForm).forEach(([k, v]) => {
+          fd.append(k, v || "");
+        });
+        if (manualPhoto) fd.append("photo", manualPhoto);
+        const res = await downloadCustomIdCard(fd);
+        const blob = new Blob([res.data], { type: "application/pdf" });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `ID_Card_${manualForm.student_id || "Custom"}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        toast.success("Custom ID Card downloaded!");
+      }
     } catch (e) {
       toast.error("Failed to generate custom ID card");
     } finally {
@@ -226,16 +318,33 @@ export default function IdCardGeneratorPage() {
   const handleManualPrint = async () => {
     try {
       setDownloading(true);
-      const fd = new FormData();
-      Object.entries(manualForm).forEach(([k, v]) => {
-        fd.append(k, v || "");
-      });
-      if (manualPhoto) fd.append("photo", manualPhoto);
-      const res = await downloadCustomIdCard(fd);
-      const blob = new Blob([res.data], { type: "application/pdf" });
-      const url = window.URL.createObjectURL(blob);
-      const win = window.open(url);
-      if (win) win.focus();
+      if (manualQueue.length > 0) {
+        const fd = new FormData();
+        const items = manualQueue.map((item) => item.manual_data);
+        fd.append("items", JSON.stringify(items));
+        fd.append("academic_year", academicYear);
+        manualQueue.forEach((item, idx) => {
+          if (item.photo) {
+            fd.append(`photo_${idx}`, item.photo);
+          }
+        });
+        const res = await downloadCustomBulkIdCards(fd);
+        const blob = new Blob([res.data], { type: "application/pdf" });
+        const url = window.URL.createObjectURL(blob);
+        const win = window.open(url);
+        if (win) win.focus();
+      } else {
+        const fd = new FormData();
+        Object.entries(manualForm).forEach(([k, v]) => {
+          fd.append(k, v || "");
+        });
+        if (manualPhoto) fd.append("photo", manualPhoto);
+        const res = await downloadCustomIdCard(fd);
+        const blob = new Blob([res.data], { type: "application/pdf" });
+        const url = window.URL.createObjectURL(blob);
+        const win = window.open(url);
+        if (win) win.focus();
+      }
     } catch (e) {
       toast.error("Failed to open print preview");
     } finally {
@@ -276,7 +385,7 @@ export default function IdCardGeneratorPage() {
             Student ID Card Generator
           </h1>
           <p className="text-sm text-neutral-500">
-            Create, preview, customize, and print high-resolution CR80 student identification badges
+            Create, preview, customize, and print high-resolution 300 DPI CR80 student identification badges (up to 5 IDs per A4 sheet)
           </p>
         </div>
 
@@ -313,11 +422,11 @@ export default function IdCardGeneratorPage() {
         <TabsList className="bg-neutral-100 p-1 border">
           <TabsTrigger value="select" className="gap-2 text-xs sm:text-sm font-semibold">
             <User className="h-4 w-4" />
-            Select Existing Student
+            Select Students ({selectedStudentsList.length}/5)
           </TabsTrigger>
           <TabsTrigger value="manual" className="gap-2 text-xs sm:text-sm font-semibold">
             <CreditCard className="h-4 w-4" />
-            Manual ID Generator
+            Manual ID Generator ({manualQueue.length}/5)
           </TabsTrigger>
           <TabsTrigger value="batch" className="gap-2 text-xs sm:text-sm font-semibold">
             <Users className="h-4 w-4" />
@@ -332,9 +441,14 @@ export default function IdCardGeneratorPage() {
             <div className="lg:col-span-5 space-y-4">
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base text-heading">Choose Student</CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base text-heading">Choose Students (1 to 5)</CardTitle>
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-[#10026B] border border-blue-200">
+                      {selectedStudentsList.length} of 5 Selected
+                    </span>
+                  </div>
                   <CardDescription className="text-xs">
-                    Search by student name or student ID number
+                    Select 1 to 5 students using checkboxes to print together on a single clean A4 sheet
                   </CardDescription>
                   <div className="relative mt-2">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
@@ -346,7 +460,7 @@ export default function IdCardGeneratorPage() {
                     />
                   </div>
                 </CardHeader>
-                <CardContent className="max-h-[460px] overflow-y-auto space-y-1 divide-y divide-neutral-100">
+                <CardContent className="max-h-[360px] overflow-y-auto space-y-1 divide-y divide-neutral-100">
                   {studentsQ.isLoading ? (
                     <div className="py-8 text-center text-xs text-neutral-400 flex items-center justify-center gap-2">
                       <Loader2 className="h-4 w-4 animate-spin text-[#10026B]" />
@@ -358,27 +472,50 @@ export default function IdCardGeneratorPage() {
                     </div>
                   ) : (
                     studentsQ.data?.map((s) => {
-                      const isSelected = selectedStudent?.id === s.id;
+                      const isChecked = selectedStudentsList.some((sel) => sel.id === s.id);
+                      const isPreviewing = selectedStudent?.id === s.id;
                       return (
                         <div
                           key={s.id}
-                          onClick={() => setSelectedStudent(s)}
-                          className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
-                            isSelected
-                              ? "bg-blue-50/80 border border-blue-200"
+                          className={`flex items-center justify-between p-2.5 rounded-lg transition-colors ${
+                            isChecked
+                              ? "bg-blue-50/90 border border-blue-200"
+                              : isPreviewing
+                              ? "bg-neutral-100"
                               : "hover:bg-neutral-50"
                           }`}
                         >
-                          <div className="min-w-0 pr-2">
-                            <p className="font-semibold text-sm text-neutral-900 truncate">
-                              {s.full_name}
-                            </p>
-                            <p className="text-xs text-neutral-500 font-mono">
-                              {s.student_id} • {s.class_name || "No class"}
-                            </p>
+                          <div
+                            className="flex items-center gap-2.5 min-w-0 pr-2 flex-1 cursor-pointer"
+                            onClick={() => setSelectedStudent(s)}
+                          >
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleStudentSelection(s);
+                              }}
+                              className="text-neutral-500 hover:text-[#10026B] transition-colors p-0.5"
+                            >
+                              {isChecked ? (
+                                <CheckSquare className="h-4 w-4 text-[#10026B]" />
+                              ) : (
+                                <Square className="h-4 w-4 text-neutral-400" />
+                              )}
+                            </button>
+                            <div className="min-w-0">
+                              <p className="font-semibold text-xs text-neutral-900 truncate">
+                                {s.full_name}
+                              </p>
+                              <p className="text-[11px] text-neutral-500 font-mono">
+                                {s.student_id} • {s.class_name || "No class"}
+                              </p>
+                            </div>
                           </div>
-                          {isSelected && (
-                            <CheckCircle className="h-4 w-4 text-[#10026B] shrink-0" />
+                          {isPreviewing && (
+                            <span className="text-[10px] font-bold text-[#10026B] bg-white px-1.5 py-0.5 rounded border border-blue-200 shrink-0">
+                              Previewing
+                            </span>
                           )}
                         </div>
                       );
@@ -386,6 +523,57 @@ export default function IdCardGeneratorPage() {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Selected Multi-Student Tray */}
+              {selectedStudentsList.length > 0 && (
+                <Card className="border-blue-200 bg-blue-50/40">
+                  <CardHeader className="py-2.5 px-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-bold text-[#10026B] flex items-center gap-1.5">
+                        <Users className="w-3.5 h-3.5" />
+                        A4 Sheet Queue ({selectedStudentsList.length}/5 Cards)
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedStudentsList([])}
+                        className="text-[11px] text-red-600 hover:underline"
+                      >
+                        Clear All
+                      </button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="py-2 px-3 space-y-1.5">
+                    {selectedStudentsList.map((st, index) => (
+                      <div
+                        key={st.id}
+                        className="flex items-center justify-between text-xs bg-white p-1.5 rounded border shadow-2xs"
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <span className="font-bold text-[#10026B] text-[11px] w-4">
+                            #{index + 1}
+                          </span>
+                          <span className="truncate font-medium text-neutral-800">
+                            {st.full_name}
+                          </span>
+                          <span className="text-[10px] text-neutral-400 font-mono">
+                            ({st.student_id})
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => toggleStudentSelection(st)}
+                          className="text-neutral-400 hover:text-red-600 p-0.5"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                    <p className="text-[10px] text-neutral-500 pt-1">
+                      Prints {selectedStudentsList.length} ID card(s) side-by-side onto 1 A4 page (clean 300 DPI, no unwanted under-card labels).
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Academic Year Modifier */}
               <Card>
@@ -451,35 +639,35 @@ export default function IdCardGeneratorPage() {
                     </div>
                   )}
 
-                  {selectedStudent && (
-                    <div className="flex flex-col sm:flex-row items-center justify-end gap-3 pt-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={downloading}
-                        onClick={handleSelectPrint}
-                        className="w-full sm:w-auto border-[#10026B] text-[#10026B] hover:bg-neutral-50"
-                      >
-                        <Printer className="w-4 h-4 mr-2" />
-                        Print Badge
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        disabled={downloading}
-                        onClick={handleSelectDownload}
-                        className="w-full sm:w-auto bg-[#10026B] hover:bg-[#1a0a8a] text-white"
-                      >
-                        {downloading ? (
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        ) : (
-                          <Download className="w-4 h-4 mr-2" />
-                        )}
-                        Download Printable PDF
-                      </Button>
-                    </div>
-                  )}
+                  <div className="flex flex-col sm:flex-row items-center justify-end gap-3 pt-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={downloading || (!selectedStudent && selectedStudentsList.length === 0)}
+                      onClick={handleSelectPrint}
+                      className="w-full sm:w-auto border-[#10026B] text-[#10026B] hover:bg-neutral-50"
+                    >
+                      <Printer className="w-4 h-4 mr-2" />
+                      Print {selectedStudentsList.length > 0 ? `Sheet (${selectedStudentsList.length})` : "Badge"}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      disabled={downloading || (!selectedStudent && selectedStudentsList.length === 0)}
+                      onClick={handleSelectDownload}
+                      className="w-full sm:w-auto bg-[#10026B] hover:bg-[#1a0a8a] text-white"
+                    >
+                      {downloading ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <Download className="w-4 h-4 mr-2" />
+                      )}
+                      {selectedStudentsList.length > 1
+                        ? `Download A4 Sheet (${selectedStudentsList.length} IDs)`
+                        : "Download Printable A4 PDF"}
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -493,9 +681,14 @@ export default function IdCardGeneratorPage() {
             <div className="lg:col-span-5 space-y-4">
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base text-heading">Enter Custom Student Data</CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base text-heading">Custom Student Data</CardTitle>
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-[#10026B] border border-blue-200">
+                      {manualQueue.length} of 5 in Queue
+                    </span>
+                  </div>
                   <CardDescription className="text-xs">
-                    Manually create and print an ID card with custom information and photo
+                    Enter details, then either print directly or click "Add to Print Sheet" to queue up to 5 IDs on 1 A4 sheet
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -615,18 +808,81 @@ export default function IdCardGeneratorPage() {
                     />
                   </div>
 
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={refreshManualPreview}
-                    className="w-full mt-2 text-xs flex items-center justify-center gap-1.5"
-                  >
-                    <RotateCw className="h-3.5 w-3.5" />
-                    Update Live Preview
-                  </Button>
+                  <div className="flex items-center gap-2 pt-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={refreshManualPreview}
+                      className="flex-1 text-xs flex items-center justify-center gap-1"
+                    >
+                      <RotateCw className="h-3 w-3" />
+                      Preview
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      disabled={manualQueue.length >= 5 || !manualForm.full_name.trim()}
+                      onClick={addCurrentToManualQueue}
+                      className="flex-1 bg-emerald-700 hover:bg-emerald-800 text-white text-xs flex items-center justify-center gap-1"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      Add to Sheet ({manualQueue.length}/5)
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
+
+              {/* Manual Queue Tray (1 to 5) */}
+              {manualQueue.length > 0 && (
+                <Card className="border-emerald-200 bg-emerald-50/40">
+                  <CardHeader className="py-2.5 px-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
+                        <Users className="w-3.5 h-3.5" />
+                        Manual Print Queue ({manualQueue.length}/5 Cards)
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setManualQueue([])}
+                        className="text-[11px] text-red-600 hover:underline"
+                      >
+                        Clear All
+                      </button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="py-2 px-3 space-y-1.5">
+                    {manualQueue.map((item, index) => (
+                      <div
+                        key={item.id}
+                        className="flex items-center justify-between text-xs bg-white p-2 rounded border shadow-2xs"
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <span className="font-bold text-emerald-800 text-[11px] w-4">
+                            #{index + 1}
+                          </span>
+                          <span className="truncate font-semibold text-neutral-800">
+                            {item.manual_data.full_name}
+                          </span>
+                          <span className="text-[10px] text-neutral-400 font-mono">
+                            ({item.manual_data.student_id})
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeManualQueueItem(item.id)}
+                          className="text-neutral-400 hover:text-red-600 p-0.5"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                    <p className="text-[10px] text-neutral-500 pt-1">
+                      Ready to generate 1 clean A4 page with {manualQueue.length} cards (Front & Back beside each other).
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
             </div>
 
             {/* Live Preview & Actions Right Column */}
@@ -673,7 +929,7 @@ export default function IdCardGeneratorPage() {
                       className="w-full sm:w-auto border-[#10026B] text-[#10026B] hover:bg-neutral-50"
                     >
                       <Printer className="w-4 h-4 mr-2" />
-                      Print Badge
+                      Print {manualQueue.length > 0 ? `Sheet (${manualQueue.length})` : "Badge"}
                     </Button>
                     <Button
                       type="button"
@@ -687,7 +943,9 @@ export default function IdCardGeneratorPage() {
                       ) : (
                         <Download className="w-4 h-4 mr-2" />
                       )}
-                      Download Custom PDF
+                      {manualQueue.length > 0
+                        ? `Download A4 Sheet (${manualQueue.length} IDs)`
+                        : "Download Custom PDF"}
                     </Button>
                   </div>
                 </CardContent>
