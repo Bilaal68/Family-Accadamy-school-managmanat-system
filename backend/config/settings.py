@@ -22,9 +22,26 @@ def _cast_bool(val):
 
 SECRET_KEY = config("SECRET_KEY")
 DEBUG = config("DEBUG", default=False, cast=_cast_bool)
-ALLOWED_HOSTS = config("ALLOWED_HOSTS", cast=Csv())
 
-# ---------------------------------------------------------------------------
+# Allowed hosts: parse from env and always ensure production & local domains are allowed
+_configured_hosts = config("ALLOWED_HOSTS", default="localhost,127.0.0.1", cast=Csv())
+ALLOWED_HOSTS = list(set(_configured_hosts + [
+    "localhost",
+    "127.0.0.1",
+    "api.familyacadamyschool.com",
+    "familyacadamyschool.com",
+    "www.familyacadamyschool.com",
+    ".familyacadamyschool.com",
+]))
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://api.familyacadamyschool.com",
+    "https://familyacadamyschool.com",
+    "https://www.familyacadamyschool.com",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
 # Application definition
 # ---------------------------------------------------------------------------
 
