@@ -42,6 +42,9 @@ CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:5173",
 ]
 
+# Public School Website URL (used for Student ID Card QR Code scanning)
+PUBLIC_WEBSITE_URL = config("PUBLIC_WEBSITE_URL", default="https://familyacadamyschool.com")
+
 # Application definition
 # ---------------------------------------------------------------------------
 

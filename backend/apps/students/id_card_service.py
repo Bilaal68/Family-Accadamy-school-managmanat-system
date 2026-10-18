@@ -217,6 +217,7 @@ def generate_id_card_front_image(student=None, academic_year=None, manual_data=N
     draw.text((1460, 1290), str(academic_year), fill=brand_blue, font=font_year)
 
     # 6. QR Code inside placeholder box [1900..2330, 800..1240]
+    # Encodes the public school website URL so scanning leads straight to the website
     if qrcode is not None:
         try:
             qr = qrcode.QRCode(
@@ -225,8 +226,8 @@ def generate_id_card_front_image(student=None, academic_year=None, manual_data=N
                 box_size=10,
                 border=1,
             )
-            qr_content = f"ID:{student_id}|NAME:{full_name}|CLASS:{class_name}"
-            qr.add_data(qr_content)
+            website_url = getattr(settings, "PUBLIC_WEBSITE_URL", "https://familyacadamyschool.com")
+            qr.add_data(website_url)
             qr.make(fit=True)
             qr_img = qr.make_image(fill_color="#10026B", back_color="white").convert("RGB")
             qr_img = qr_img.resize((410, 410), Image.Resampling.LANCZOS)
