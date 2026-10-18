@@ -234,9 +234,14 @@ class StudentViewSet(viewsets.ModelViewSet):
         else:
             img = generate_id_card_front_image(student, academic_year=academic_year)
 
+        # Optimize for web preview speed & lightweight payload (~80-120 KB instead of 1.5-2.5 MB)
+        preview_w = 1020
+        preview_h = int(img.height * (preview_w / img.width))
+        preview_img = img.resize((preview_w, preview_h), Image.Resampling.BILINEAR)
+
         import io
         buf = io.BytesIO()
-        img.save(buf, format="JPEG", quality=90)
+        preview_img.save(buf, format="JPEG", quality=82, optimize=True)
         return HttpResponse(buf.getvalue(), content_type="image/jpeg")
 
     @action(detail=False, methods=["get", "post"], url_path="bulk-id-cards")
@@ -338,9 +343,14 @@ class StudentViewSet(viewsets.ModelViewSet):
                 photo_file=photo_file,
             )
 
+        # Optimize for web preview speed & lightweight payload (~80-120 KB instead of 1.5-2.5 MB)
+        preview_w = 1020
+        preview_h = int(img.height * (preview_w / img.width))
+        preview_img = img.resize((preview_w, preview_h), Image.Resampling.BILINEAR)
+
         import io
         buf = io.BytesIO()
-        img.save(buf, format="JPEG", quality=90)
+        preview_img.save(buf, format="JPEG", quality=82, optimize=True)
         return HttpResponse(buf.getvalue(), content_type="image/jpeg")
 
     @action(

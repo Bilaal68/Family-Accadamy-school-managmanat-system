@@ -1,7 +1,8 @@
 import io
 import os
 from pathlib import Path
-from PIL import Image, ImageDraw, ImageFont
+from functools import lru_cache
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 try:
     import qrcode
 except ImportError:
@@ -13,17 +14,18 @@ from django.conf import settings
 from apps.enrollment.models import EnrollmentRequest
 
 # Font paths
-FONT_BOLD_CANDIDATES = [
+FONT_BOLD_CANDIDATES = (
     "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
     "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
     "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf",
-]
-FONT_REGULAR_CANDIDATES = [
+)
+FONT_REGULAR_CANDIDATES = (
     "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
     "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
     "/usr/share/fonts/truetype/freefont/FreeSans.ttf",
-]
+)
 
+@lru_cache(maxsize=32)
 def _get_font(candidates, size):
     for path in candidates:
         if os.path.exists(path):
@@ -42,6 +44,14 @@ def _get_template_paths():
     if not back_path.exists():
         back_path = settings.BASE_DIR / "media" / "id_themplate" / "id_back_template.jpeg"
     return str(front_path), str(back_path)
+
+@lru_cache(maxsize=1)
+def _get_cached_front_template(path):
+    return Image.open(path).convert("RGB")
+
+@lru_cache(maxsize=1)
+def _get_cached_back_template(path):
+    return Image.open(path).convert("RGB")
 
 def _get_student_parent_info(student):
     """
@@ -103,7 +113,7 @@ def generate_id_card_front_image(student=None, academic_year=None, manual_data=N
     }
     """
     front_template_path, _ = _get_template_paths()
-    image = Image.open(front_template_path).convert("RGB")
+    image = _get_cached_front_template(front_template_path).copy()
     draw = ImageDraw.Draw(image)
 
     font_name = _get_font(FONT_BOLD_CANDIDATES, 66)
@@ -135,12 +145,14 @@ def generate_id_card_front_image(student=None, academic_year=None, manual_data=N
     raw_photo_img = None
     if photo_file:
         try:
-            raw_photo_img = Image.open(photo_file).convert("RGB")
+            raw_photo_img = Image.open(photo_file)
+            raw_photo_img = ImageOps.exif_transpose(raw_photo_img).convert("RGB")
         except Exception:
             pass
     elif student and student.photo and hasattr(student.photo, "path") and os.path.exists(student.photo.path):
         try:
-            raw_photo_img = Image.open(student.photo.path).convert("RGB")
+            raw_photo_img = Image.open(student.photo.path)
+            raw_photo_img = ImageOps.exif_transpose(raw_photo_img).convert("RGB")
         except Exception:
             pass
 
@@ -231,7 +243,7 @@ def generate_id_card_back_image(student=None, manual_data=None):
     Renders back of student ID card using PIL and returns PIL.Image
     """
     _, back_template_path = _get_template_paths()
-    image = Image.open(back_template_path).convert("RGB")
+    image = _get_cached_back_template(back_template_path).copy()
     draw = ImageDraw.Draw(image)
 
     font_bold = _get_font(FONT_BOLD_CANDIDATES, 54)

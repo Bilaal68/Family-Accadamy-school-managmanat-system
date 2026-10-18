@@ -170,10 +170,25 @@ export default function IdCardGeneratorPage() {
   };
 
   useEffect(() => {
-    if (activeTab === "manual") {
+    if (activeTab !== "manual") return;
+
+    const timer = setTimeout(() => {
       refreshManualPreview();
-    }
-  }, [activeTab, side, manualForm.student_id, manualForm.full_name, manualForm.class_name, manualPhoto]);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [
+    activeTab,
+    side,
+    manualForm.student_id,
+    manualForm.full_name,
+    manualForm.class_name,
+    manualForm.academic_year,
+    manualForm.guardian_name,
+    manualForm.emergency_contact,
+    manualForm.address,
+    manualPhoto,
+  ]);
 
   // Handlers for Tab 1 (Select Student)
   const toggleStudentSelection = (student) => {
